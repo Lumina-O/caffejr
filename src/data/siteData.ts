@@ -111,6 +111,16 @@ export const siteData = {
         text: "Rigtig service og god kommunikation. Maskinen kører som ny nu.",
         name: "Kunde, København",
       },
+      {
+        rating: "★★★★★",
+        text: "Rigtig service og god kommunikation. Maskinen kører som ny nu.",
+        name: "Kunde, København",
+      },
+      {
+        rating: "★★★★★",
+        text: "Rigtig service og god kommunikation. Maskinen kører som ny nu.",
+        name: "Kunde, København",
+      },
     ],
     button: "Book Nu",
   },
@@ -121,7 +131,7 @@ export const siteData = {
     phone: "+45 53 51 24 03",
     email: "caffejrinfo@gmail.com",
     address: "Vigerslevvej 50A, 2500 Valby",
-    hours: "Mandag til fredag kl. 9:00 - 17:00",
+    hours: "Mandag til fredag kl. 16:30 - 18:30",
   },
 };
 

@@ -7,18 +7,34 @@ export default function Hero() {
   return (
     <section id="hero" className="px-4 pt-4 pb-10 md:px-6 md:pt-6 md:pb-14">
       <div
-        className="mx-auto max-w-7xl rounded-[28px] border px-5 py-5 md:px-8 md:py-7"
+        className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] border px-5 py-5 md:px-8 md:py-7"
         style={{
           borderColor: "var(--color-border-soft)",
           backgroundColor: "var(--color-bg-card)",
           boxShadow: "var(--shadow-main)",
         }}
       >
+        {/* MOBILE BACKGROUND IMAGE */}
         <div
-          className="rounded-[24px] px-4 py-5 md:px-8 md:py-7"
+          className="absolute inset-0 md:hidden"
           style={{
+            backgroundImage: "url('/images/hero-machine.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
           }}
-        >
+        />
+
+        {/* MOBILE DARK OVERLAY */}
+        <div
+          className="absolute inset-0 md:hidden"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(20,10,8,0.72), rgba(20,10,8,0.84))",
+          }}
+        />
+
+        <div className="relative z-10 rounded-[24px] px-4 py-5 md:px-8 md:py-7">
           <div className="space-y-6">
             {/* TITLE */}
             <div>
@@ -54,8 +70,8 @@ export default function Hero() {
               </div>
 
               {/* CENTER IMAGE */}
-              <div className="flex justify-center md:-mt-2">
-                <div className="flex h-[260px] w-[220px] items-end justify-center md:h-[340px] md:w-[280px] lg:h-[380px] lg:w-[320px]">
+              <div className="hidden justify-center md:flex md:-mt-2">
+                <div className="flex h-[340px] w-[280px] items-end justify-center lg:h-[380px] lg:w-[320px]">
                   <div
                     className="flex h-full w-full items-center justify-center rounded-[18px] border"
                     style={{
@@ -118,6 +134,6 @@ export default function Hero() {
   );
 }
 
-// TODO: Replace placeholder with the real coffee machine product image.
-// TODO: Add decorative coffee splash graphics positioned absolutely around the hero.
-// TODO: Fine-tune heading size and side column widths against the final approved mockup.
+// TODO: Replace '/images/hero-machine.jpg' with the real hero image path.
+// TODO: Add a stronger or lighter mobile overlay depending on text readability.
+// TODO: Fine-tune mobile spacing once the real image is added.
