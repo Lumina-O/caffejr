@@ -12,7 +12,7 @@ export default function Contact({ language }: ContactProps) {
     <section
       id="contact"
       className="relative w-full px-4 py-20 md:px-6 md:py-24 lg:py-28"
-      style={{ backgroundColor: "var(--color-bg-main)" }}
+      style={{ backgroundColor: "var(--color-bg-surface)" }}
     >
       <div className="mx-auto max-w-7xl">
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-stretch">
