@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { getSiteData, type Language } from "@/data/siteData";
 
@@ -8,10 +9,7 @@ type NavbarProps = {
   onLanguageChange: (language: Language) => void;
 };
 
-export default function Navbar({
-  language,
-  onLanguageChange,
-}: NavbarProps) {
+export default function Navbar({ language, onLanguageChange }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const data = getSiteData(language);
 
@@ -32,9 +30,17 @@ export default function Navbar({
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 md:px-12">
           <a
             href="#top"
-            className="text-2xl font-bold tracking-wide text-[#f4d7ae] transition-opacity hover:opacity-80"
+            className="flex items-center gap-3 text-2xl font-bold tracking-wide text-[#f4d7ae] transition-opacity hover:opacity-80"
           >
-            {data.brand}
+            <Image
+              src="/images/logo.png"
+              alt={`${data.brand} logo`}
+              width={40}
+              height={40}
+              className="h-10 w-10 object-contain"
+              priority
+            />
+            <span>{data.brand}</span>
           </a>
 
           <div className="hidden items-center gap-4 md:flex">
@@ -58,14 +64,14 @@ export default function Navbar({
               })}
             </nav>
 
-            <div className="flex items-center rounded-full border border-[#7a4b2e] p-1.5">
+            <div className="flex items-center rounded-full border border-[#7a4b2e] bg-[#24150f] p-1.5">
               <button
                 type="button"
                 onClick={() => handleLanguageChange("da")}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                   language === "da"
-                    ? "bg-[#7a4b2e] text-[#fff3e0]"
-                    : "text-[#f4d7ae] hover:text-[#d29a68]"
+                    ? "bg-[#d29a68] text-[#1b0d07] shadow-md"
+                    : "text-[#caa07a] hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
                 }`}
                 aria-label="Switch language to Danish"
               >
@@ -75,10 +81,10 @@ export default function Navbar({
               <button
                 type="button"
                 onClick={() => handleLanguageChange("en")}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                   language === "en"
-                    ? "bg-[#7a4b2e] text-[#fff3e0]"
-                    : "text-[#f4d7ae] hover:text-[#d29a68]"
+                    ? "bg-[#d29a68] text-[#1b0d07] shadow-md"
+                    : "text-[#caa07a] hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
                 }`}
                 aria-label="Switch language to English"
               >
@@ -102,15 +108,25 @@ export default function Navbar({
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex min-h-screen flex-col bg-[#1b0d07] px-6 py-6 md:hidden">
           <div className="flex items-center justify-between border-b border-[#3a2418]/60 pb-4">
-            <span className="text-2xl font-bold tracking-wide text-[#f4d7ae]">
-              {data.brand}
+            <span className="flex items-center gap-3 text-2xl font-bold tracking-wide text-[#f4d7ae]">
+              <Image
+                src="/images/logo.png"
+                alt={`${data.brand} logo`}
+                width={36}
+                height={36}
+                className="h-9 w-9 object-contain"
+                priority
+              />
+              <span>{data.brand}</span>
             </span>
 
             <button
               type="button"
               onClick={() => setIsOpen(false)}
               className="rounded-full border border-[#7a4b2e] px-4 py-2 text-sm font-medium text-[#f4d7ae] transition-colors hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
-              aria-label={language === "da" ? "Luk menu" : "Close navigation menu"}
+              aria-label={
+                language === "da" ? "Luk menu" : "Close navigation menu"
+              }
             >
               {language === "da" ? "Luk" : "Close"}
             </button>
@@ -168,3 +184,4 @@ export default function Navbar({
 // TODO: Close menu when user presses Escape.
 // TODO: Highlight active section in navbar while scrolling.
 // TODO: Save selected language in localStorage so it stays after refresh.
+// TODO: Adjust logo size and spacing if the final brand lockup changes.

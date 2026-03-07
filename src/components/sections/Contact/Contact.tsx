@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getSiteData, type Language } from "@/data/siteData";
 import Button from "@/components/ui/Button/Button";
 
@@ -7,6 +10,22 @@ type ContactProps = {
 
 export default function Contact({ language }: ContactProps) {
   const { contact } = getSiteData(language);
+
+  const address = "Vigerslevvej 50A, 2500 Valby";
+  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(address)}&z=15&output=embed`;
+
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapFailed, setMapFailed] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!mapLoaded) {
+        setMapFailed(true);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [mapLoaded]);
 
   return (
     <section
@@ -114,28 +133,40 @@ export default function Contact({ language }: ContactProps) {
           </div>
 
           <div
-            className="flex min-h-[320px] items-center justify-center rounded-[24px] border px-6 py-6 md:min-h-[420px]"
+            className="relative overflow-hidden rounded-[24px] border md:min-h-[420px]"
             style={{
               backgroundColor: "#24150f",
               borderColor: "rgba(90, 53, 36, 0.9)",
               boxShadow: "0 10px 24px rgba(0, 0, 0, 0.2)",
             }}
           >
-            <div className="text-center">
-              <p
-                className="text-sm font-semibold uppercase tracking-[0.16em]"
-                style={{ color: "var(--color-accent-soft)" }}
-              >
-                Kontaktkort
-              </p>
-              <p
-                className="mt-3 text-sm leading-relaxed md:text-base"
-                style={{ color: "var(--color-text-muted)" }}
-              >
-                Her kan du senere indsætte kort, billede, kontaktformular eller
-                en visuel informationsblok.
-              </p>
-            </div>
+            {!mapFailed ? (
+              <iframe
+                title="Google Map - Vigerslevvej 50A, 2500 Valby"
+                src={mapSrc}
+                className="h-full min-h-[320px] w-full md:min-h-[420px]"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                onLoad={() => setMapLoaded(true)}
+              />
+            ) : (
+              <div className="flex h-full min-h-[320px] items-center justify-center px-6 text-center md:min-h-[420px]">
+                <div>
+                  <p
+                    className="text-sm font-semibold uppercase tracking-[0.16em]"
+                    style={{ color: "var(--color-accent-soft)" }}
+                  >
+                    Map
+                  </p>
+                  <p
+                    className="mt-3 text-sm leading-relaxed md:text-base"
+                    style={{ color: "var(--color-text-muted)" }}
+                  >
+                    Map cant be rendered
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -143,6 +174,6 @@ export default function Contact({ language }: ContactProps) {
   );
 }
 
-// TODO: Replace the right-side placeholder with a real map, workshop image, or contact form.
+// TODO: Replace the right-side placeholder with a styled branded map wrapper if needed.
 // TODO: Add tel: and mailto: links when the final interaction flow is ready.
 // TODO: Connect the CTA buttons to the final booking or contact action.

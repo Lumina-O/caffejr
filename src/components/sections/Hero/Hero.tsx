@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Button from "@/components/ui/Button/Button";
 import { getSiteData, type Language } from "@/data/siteData";
 
@@ -11,56 +12,66 @@ export default function Hero({ language }: HeroProps) {
   return (
     <section
       id="hero"
-      className="scroll-mt-28 px-4 pt-4 pb-10 md:px-6 md:pt-6 md:pb-14 lg:pb-16"
+      className="scroll-mt-28 px-4 pt-4 pb-10 md:px-6 md:pt-6 md:pb-14 lg:px-8 lg:pb-16"
     >
       <div
-        className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] border px-5 py-6 md:px-8 md:py-8 lg:min-h-[720px]"
+        className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] border"
         style={{
           borderColor: "var(--color-border-soft)",
           backgroundColor: "var(--color-bg-card)",
           boxShadow: "var(--shadow-main)",
         }}
       >
-        <div
-          className="absolute inset-0 md:hidden"
-          style={{
-            backgroundImage: "url('/images/hero-machine.jpg')",
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          }}
-        />
+        {/* Mobile / tablet background image */}
+        <div className="absolute inset-0 lg:hidden">
+          <Image
+            src="/images/header-image.png"
+            alt="Hero background"
+            fill
+            className="object-cover object-center"
+            priority
+          />
+        </div>
 
+        {/* Mobile / tablet overlay */}
         <div
-          className="absolute inset-0 md:hidden"
+          className="absolute inset-0 z-[1] lg:hidden"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(20,10,8,0.72), rgba(20,10,8,0.84))",
+              "linear-gradient(to bottom, rgba(20,10,8,0.72), rgba(20,10,8,0.88))",
           }}
         />
 
-        <div className="relative z-10 rounded-[24px] px-4 py-5 md:px-8 md:py-7">
-          <div className="space-y-6">
-            <div>
-              <h1
-                className="text-center text-[3rem] font-black uppercase leading-none tracking-[-0.04em] sm:text-[4.5rem] md:text-[6rem] lg:text-[7.5rem]"
-                style={{ color: "var(--color-accent)" }}
-              >
-                {hero.title}
-              </h1>
-            </div>
+        {/* Desktop subtle background */}
+        <div
+          className="absolute inset-0 hidden lg:block"
+          style={{
+            background:
+              "radial-gradient(circle at center, rgba(120,72,48,0.08), transparent 52%)",
+          }}
+        />
 
-            <div className="grid items-center gap-6 md:grid-cols-[1fr_320px_1fr] lg:grid-cols-[1fr_380px_1fr]">
-              <div className="max-w-[320px] space-y-4 md:self-start">
+        <div className="relative z-10 px-5 py-6 md:px-8 md:py-8 lg:px-10 lg:py-10">
+          <div className="space-y-6 lg:space-y-8">
+            <h1
+              className="mb-10 text-center text-[3rem] font-black uppercase leading-none tracking-[-0.05em] sm:text-[4.5rem] md:text-[5rem] lg:mb-16 lg:text-[7.2rem] xl:text-[8rem]"
+              style={{ color: "var(--color-accent)" }}
+            >
+              {hero.title}
+            </h1>
+
+            <div className="grid gap-6 lg:grid-cols-[1fr_460px_1fr] lg:items-center lg:gap-8 xl:grid-cols-[1fr_520px_1fr]">
+              {/* Left content */}
+              <div className="max-w-[320px] space-y-4 lg:self-center lg:max-w-[360px]">
                 <h2
-                  className="text-left text-[1.35rem] font-extrabold uppercase leading-[1.05] tracking-[-0.03em] sm:text-[1.6rem] md:text-[1.8rem]"
+                  className="text-left text-[1.35rem] font-extrabold uppercase leading-[1.05] tracking-[-0.03em] sm:text-[1.6rem] lg:text-[2rem]"
                   style={{ color: "var(--color-accent)" }}
                 >
                   {hero.leftTitle}
                 </h2>
 
                 <p
-                  className="max-w-[280px] text-left text-sm leading-relaxed md:text-[0.95rem]"
+                  className="max-w-[300px] text-left text-sm leading-relaxed md:max-w-[320px] lg:text-base"
                   style={{ color: "var(--color-text-main)" }}
                 >
                   {hero.leftText}
@@ -71,30 +82,25 @@ export default function Hero({ language }: HeroProps) {
                 </div>
               </div>
 
-              <div className="hidden justify-center md:flex md:-mt-2">
-                <div className="flex h-[340px] w-[280px] items-end justify-center lg:h-[380px] lg:w-[320px]">
-                  <div
-                    className="flex h-full w-full items-center justify-center rounded-[18px] border"
-                    style={{
-                      backgroundColor: "#24120c",
-                      borderColor: "#5a3524",
-                      boxShadow: "0 18px 40px rgba(0,0,0,0.38)",
-                    }}
-                  >
-                    <span
-                      className="px-6 text-center text-sm"
-                      style={{ color: "var(--color-text-muted)" }}
-                    >
-                      Coffee machine image
-                    </span>
-                  </div>
+              {/* Center image - desktop only */}
+              <div className="hidden justify-center lg:flex lg:items-end">
+                <div className="flex items-end justify-center">
+                  <Image
+                    src="/images/header-image.png"
+                    alt="Coffee machine"
+                    width={120}
+                    height={320}
+                    className="h-auto w-[200px] lg:w-[240px] xl:w-[280px] drop-shadow-[0_20px_40px_rgba(0,0,0,0.45)]"
+                    priority
+                  />
                 </div>
               </div>
 
-              <div className="flex flex-col items-stretch gap-3 md:ml-auto md:max-w-[280px] md:self-center">
-                <div className="mb-2 text-center md:text-right">
+              {/* Right content */}
+              <div className="flex flex-col items-stretch gap-3 lg:ml-auto lg:max-w-[320px] lg:self-center">
+                <div className="mb-2 text-center lg:text-right">
                   <h3
-                    className="text-[1.2rem] font-extrabold uppercase leading-[1.1] tracking-[-0.03em] sm:text-[1.35rem]"
+                    className="text-[1.2rem] font-extrabold uppercase leading-[1.1] tracking-[-0.03em] sm:text-[1.35rem] lg:text-[1.75rem]"
                     style={{ color: "var(--color-accent)" }}
                   >
                     {hero.rightTitle}
@@ -104,7 +110,7 @@ export default function Hero({ language }: HeroProps) {
                 {hero.serviceBullets.map((bullet, index) => (
                   <div
                     key={bullet}
-                    className="rounded-[16px] border px-4 py-3 text-center md:text-right"
+                    className="rounded-[16px] border px-4 py-3 text-center lg:px-5 lg:py-3.5 lg:text-right"
                     style={{
                       backgroundColor: "#3a2218",
                       borderColor: "var(--color-border-card)",
@@ -112,7 +118,7 @@ export default function Hero({ language }: HeroProps) {
                     }}
                   >
                     <p
-                      className="text-sm font-extrabold"
+                      className="text-sm font-extrabold lg:text-[0.95rem]"
                       style={{ color: "var(--color-accent)" }}
                     >
                       {bullet}
@@ -133,7 +139,3 @@ export default function Hero({ language }: HeroProps) {
     </section>
   );
 }
-
-// TODO: Replace '/images/hero-machine.jpg' with the real hero image path.
-// TODO: Add a stronger or lighter mobile overlay depending on text readability.
-// TODO: Fine-tune mobile spacing once the real image is added.
