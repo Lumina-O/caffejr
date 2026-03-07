@@ -5,6 +5,7 @@ import Help from "@/components/sections/Help/Help";
 import Process from "@/components/sections/Process/Process";
 import Testimonials from "@/components/sections/Testimonials/Testimonials";
 import Contact from "@/components/sections/Contact/Contact";
+import "./globals.css";
 
 export default function Home() {
   return (

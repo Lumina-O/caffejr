@@ -1,31 +1,88 @@
-import styles from "./Testimonials.module.css";
-import SectionTitle from "@/components/ui/SectionTitle/SectionTitle";
-import InfoCard from "@/components/ui/InfoCard/InfoCard";
+import { siteData } from "@/data/siteData";
+import Button from "@/components/ui/Button/Button";
 
 export default function Testimonials() {
-  return (
-    <section id="testimonials" className={styles.testimonials}>
-      <div className={styles.container}>
-        <SectionTitle
-          eyebrow="Testimonials"
-          title="What our customers say"
-          description="A few kind words from people who have experienced our coffee service."
-          align="center"
-        />
+  const { testimonials } = siteData;
 
-        <div className={styles.grid}>
-          <InfoCard
-            title="Beautiful setup"
-            text='"The coffee station looked amazing and the service felt truly premium from start to finish."'
-          />
-          <InfoCard
-            title="Smooth experience"
-            text='"Everything was easy, professional, and our guests loved the coffee quality."'
-          />
-          <InfoCard
-            title="Would book again"
-            text='"Perfect for our event. Warm team, elegant presentation, and delicious coffee."'
-          />
+  return (
+    <section
+      id="testimonials"
+      className="relative w-full px-4 py-20 md:px-6 md:py-24 lg:py-28"
+      style={{ backgroundColor: "var(--color-bg-main)" }}
+    >
+      <div className="mx-auto max-w-7xl">
+        <div className="max-w-4xl">
+          <p
+            className="mb-3 text-xs font-semibold uppercase tracking-[0.24em]"
+            style={{ color: "var(--color-accent-soft)" }}
+          >
+            Testimonials
+          </p>
+
+          <h2
+            className="text-[2.4rem] font-black uppercase leading-[0.92] tracking-[-0.05em] sm:text-[3.2rem] md:text-[4.4rem] lg:text-[5rem]"
+            style={{ color: "var(--color-accent)" }}
+          >
+            {testimonials.title}
+          </h2>
+
+          <p
+            className="mt-3 max-w-2xl text-sm leading-relaxed md:text-base"
+            style={{ color: "var(--color-text-main)" }}
+          >
+            {testimonials.subtitle}
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-4 md:mt-14 sm:grid-cols-2 xl:grid-cols-4 xl:gap-5">
+          {testimonials.cards.map((card, index) => (
+            <article
+              key={`${card.name}-${index}`}
+              className="flex min-h-[200px] flex-col rounded-[18px] border px-5 py-5 md:min-h-[220px] md:px-6 md:py-6"
+              style={{
+                backgroundColor: "#2f1c15",
+                borderColor: "rgba(90, 53, 36, 0.9)",
+                boxShadow: "0 10px 24px rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              <span
+                className="text-base leading-none md:text-lg"
+                style={{ color: "var(--color-accent)" }}
+              >
+                {card.rating}
+              </span>
+
+              <p
+                className="mt-4 flex-1 text-sm leading-relaxed md:text-[0.95rem]"
+                style={{ color: "var(--color-text-main)" }}
+              >
+                <span
+                  className="text-3xl leading-none"
+                  style={{ color: "var(--color-accent)" }}
+                >
+                  “
+                </span>
+                {card.text}
+                <span
+                  className="text-3xl leading-none"
+                  style={{ color: "var(--color-accent)" }}
+                >
+                  “
+                </span>
+              </p>
+
+              <p
+                className="mt-5 text-xs font-semibold uppercase tracking-[0.12em] md:text-sm"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                {card.name}
+              </p>
+            </article>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button text={testimonials.button} variant="primary" size="sm" />
         </div>
       </div>
     </section>
@@ -33,3 +90,5 @@ export default function Testimonials() {
 }
 
 // TODO: Replace placeholder reviews with real customer testimonials and names.
+// TODO: Add decorative quote marks or coffee-themed accents if the customer wants more personality.
+// TODO: Link CTA button to the final booking/contact flow once ready.

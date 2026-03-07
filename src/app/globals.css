@@ -1,26 +1,115 @@
 @import "tailwindcss";
 
+/* ============================= */
+/* ROOT DESIGN TOKENS            */
+/* ============================= */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Main colors */
+  --color-bg-main: #1b0f09;
+  --color-bg-surface: #2a160f;
+  --color-bg-card: #341c13;
+
+  /* Borders */
+  --color-border-soft: #3b2418;
+  --color-border-card: #4a2d21;
+
+  /* Text */
+  --color-text-main: #ead7b7;
+  --color-text-muted: #b89467;
+
+  /* Brand accent */
+  --color-accent: #d6a56a;
+  --color-accent-soft: #c68a57;
+
+  /* Shadows */
+  --shadow-main: 0 20px 60px rgba(0,0,0,0.35);
+  --shadow-card: 0 8px 20px rgba(0,0,0,0.18);
+
+  /* Radius */
+  --radius-xl: 28px;
+  --radius-lg: 20px;
+  --radius-md: 16px;
 }
 
+/* ============================= */
+/* TAILWIND THEME BRIDGE         */
+/* ============================= */
+
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--color-bg-main);
+  --color-foreground: var(--color-text-main);
+
+  --color-surface: var(--color-bg-surface);
+  --color-card: var(--color-bg-card);
+
+  --color-accent: var(--color-accent);
+  --color-accent-soft: var(--color-accent-soft);
+
+  --color-border-soft: var(--color-border-soft);
+  --color-border-card: var(--color-border-card);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ============================= */
+/* BASE STYLES                   */
+/* ============================= */
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-bg-main);
+  color: var(--color-text-main);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* ============================= */
+/* REUSABLE UTILITIES            */
+/* ============================= */
+
+/* Section container */
+.section-container {
+  @apply mx-auto max-w-7xl px-4 md:px-6;
+}
+
+/* Main card container used in hero and sections */
+.surface-main {
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--color-border-soft);
+  box-shadow: var(--shadow-main);
+}
+
+/* Smaller cards */
+.surface-card {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-card);
+  box-shadow: var(--shadow-card);
+}
+
+/* Section titles */
+.section-title {
+  @apply font-black uppercase tracking-tight text-[2.2rem] md:text-[2.8rem];
+  color: var(--color-accent);
+}
+
+/* Section subtitle */
+.section-subtitle {
+  @apply text-sm md:text-base;
+  color: var(--color-text-muted);
+}
+
+/* Accent text */
+.text-accent {
+  color: var(--color-accent);
+}
+
+/* Muted text */
+.text-muted {
+  color: var(--color-text-muted);
 }
