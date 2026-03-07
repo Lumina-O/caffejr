@@ -1,8 +1,12 @@
-import { siteData } from "@/data/siteData";
+import { getSiteData, type Language } from "@/data/siteData";
 import Button from "@/components/ui/Button/Button";
 
-export default function Contact() {
-  const { contact } = siteData;
+type ContactProps = {
+  language: Language;
+};
+
+export default function Contact({ language }: ContactProps) {
+  const { contact } = getSiteData(language);
 
   return (
     <section

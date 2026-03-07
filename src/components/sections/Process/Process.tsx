@@ -1,14 +1,18 @@
-import { siteData } from "@/data/siteData";
+import { getSiteData, type Language } from "@/data/siteData";
 import Button from "@/components/ui/Button/Button";
 
-export default function Process() {
-  const { process } = siteData;
+type ProcessProps = {
+  language: Language;
+};
+
+export default function Process({ language }: ProcessProps) {
+  const { process } = getSiteData(language);
 
   return (
     <section
       id="process"
       className="relative overflow-hidden px-4 py-16 md:px-6 md:py-20 lg:min-h-screen lg:px-8 lg:py-24"
-      style={{ backgroundColor: "var(--color-bg-main)" }}
+      style={{ backgroundColor: "var(--color-bg-surface)" }}
     >
       <div className="mx-auto flex w-full max-w-7xl flex-col justify-between lg:min-h-[calc(100vh-12rem)]">
         <div className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
@@ -17,7 +21,7 @@ export default function Process() {
               className="text-xs font-bold uppercase tracking-[0.28em] md:text-sm"
               style={{ color: "var(--color-accent)" }}
             >
-              How it works
+              {process.eyebrow}
             </p>
 
             <h2
@@ -49,15 +53,14 @@ export default function Process() {
                 className="text-xs font-semibold uppercase tracking-[0.22em] md:text-sm"
                 style={{ color: "var(--color-accent)" }}
               >
-                Service promise
+                {process.promise.title}
               </p>
 
               <p
                 className="mt-4 text-sm leading-relaxed sm:text-base md:text-lg"
                 style={{ color: "var(--color-text-main)" }}
               >
-                A simple and reliable process built around fast communication,
-                clear planning, and expert handling of your coffee equipment.
+                {process.promise.text}
               </p>
             </div>
           </div>
@@ -134,6 +137,6 @@ export default function Process() {
   );
 }
 
-// TODO: Translate the service promise text into Danish if the rest of the page stays fully Danish.
 // TODO: Add real links for the CTA buttons once the contact and services sections are finalized.
 // TODO: Consider using custom line breaks in process.title if the client wants exact control of the heading layout.
+// TODO: Add optional icon or badge inside the promise card for extra visual weight.

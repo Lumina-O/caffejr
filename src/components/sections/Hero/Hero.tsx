@@ -1,20 +1,26 @@
 import Button from "@/components/ui/Button/Button";
-import { siteData } from "@/data/siteData";
+import { getSiteData, type Language } from "@/data/siteData";
 
-export default function Hero() {
-  const { hero } = siteData;
+type HeroProps = {
+  language: Language;
+};
+
+export default function Hero({ language }: HeroProps) {
+  const { hero } = getSiteData(language);
 
   return (
-    <section id="hero" className="px-4 pt-4 pb-10 md:px-6 md:pt-6 md:pb-14">
+    <section
+      id="hero"
+      className="scroll-mt-28 px-4 pt-4 pb-10 md:px-6 md:pt-6 md:pb-14 lg:pb-16"
+    >
       <div
-        className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] border px-5 py-5 md:px-8 md:py-7"
+        className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] border px-5 py-6 md:px-8 md:py-8 lg:min-h-[720px]"
         style={{
           borderColor: "var(--color-border-soft)",
           backgroundColor: "var(--color-bg-card)",
           boxShadow: "var(--shadow-main)",
         }}
       >
-        {/* MOBILE BACKGROUND IMAGE */}
         <div
           className="absolute inset-0 md:hidden"
           style={{
@@ -25,7 +31,6 @@ export default function Hero() {
           }}
         />
 
-        {/* MOBILE DARK OVERLAY */}
         <div
           className="absolute inset-0 md:hidden"
           style={{
@@ -36,7 +41,6 @@ export default function Hero() {
 
         <div className="relative z-10 rounded-[24px] px-4 py-5 md:px-8 md:py-7">
           <div className="space-y-6">
-            {/* TITLE */}
             <div>
               <h1
                 className="text-center text-[3rem] font-black uppercase leading-none tracking-[-0.04em] sm:text-[4.5rem] md:text-[6rem] lg:text-[7.5rem]"
@@ -46,9 +50,7 @@ export default function Hero() {
               </h1>
             </div>
 
-            {/* MAIN HERO GRID */}
             <div className="grid items-center gap-6 md:grid-cols-[1fr_320px_1fr] lg:grid-cols-[1fr_380px_1fr]">
-              {/* LEFT CONTENT */}
               <div className="max-w-[320px] space-y-4 md:self-start">
                 <h2
                   className="text-left text-[1.35rem] font-extrabold uppercase leading-[1.05] tracking-[-0.03em] sm:text-[1.6rem] md:text-[1.8rem]"
@@ -69,7 +71,6 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* CENTER IMAGE */}
               <div className="hidden justify-center md:flex md:-mt-2">
                 <div className="flex h-[340px] w-[280px] items-end justify-center lg:h-[380px] lg:w-[320px]">
                   <div
@@ -90,7 +91,6 @@ export default function Hero() {
                 </div>
               </div>
 
-              {/* RIGHT CONTENT */}
               <div className="flex flex-col items-stretch gap-3 md:ml-auto md:max-w-[280px] md:self-center">
                 <div className="mb-2 text-center md:text-right">
                   <h3

@@ -1,16 +1,20 @@
-import { siteData } from "@/data/siteData";
+import { getSiteData, type Language } from "@/data/siteData";
 import Button from "@/components/ui/Button/Button";
 
-export default function Testimonials() {
-  const { testimonials } = siteData;
+ type TestimonialsProps = {
+  language: Language;
+};
+
+export default function Testimonials({ language }: TestimonialsProps) {
+  const { testimonials } = getSiteData(language);
 
   return (
-    <section
-      id="testimonials"
-      className="relative w-full px-4 py-20 md:px-6 md:py-24 lg:py-28"
-      style={{ backgroundColor: "var(--color-bg-main)" }}
-    >
-      <div className="mx-auto max-w-7xl">
+<section
+  id="testimonials"
+  className="relative scroll-mt-28 overflow-hidden px-4 py-16 md:px-6 md:py-20 lg:min-h-screen lg:px-8 lg:py-24"
+  style={{ backgroundColor: "var(--color-bg-main)" }}
+>
+  <div className="mx-auto flex w-full max-w-7xl flex-col justify-between lg:min-h-[calc(100vh-12rem)]">
         <div className="max-w-4xl">
           <p
             className="mb-3 text-xs font-semibold uppercase tracking-[0.24em]"
