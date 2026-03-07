@@ -10,7 +10,7 @@ export default function Help({ language }: HelpProps) {
   return (
     <section
       id="help"
-      className="relative scroll-mt-28 overflow-hidden px-4 py-16 md:px-6 md:py-20 lg:min-h-screen lg:px-8 lg:py-24"
+      className="relative overflow-hidden px-4 py-16 md:px-6 md:py-20 lg:min-h-screen lg:px-8 lg:py-24"
       style={{ backgroundColor: "var(--color-bg-main)" }}
     >
       <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-center">

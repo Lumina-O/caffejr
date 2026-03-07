@@ -26,7 +26,7 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-[#3a2418]/60 bg-[#1b0d07]/95 backdrop-blur-sm">
+      <header className="fixed left-0 right-0 top-0 z-50 w-full border-b border-[#3a2418]/60 bg-[#1b0d07]/95 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 md:px-12">
           <a
             href="#top"
@@ -52,9 +52,9 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
                   <a
                     key={link.href}
                     href={link.href}
-                    className={`text-sm font-medium transition-colors ${
+                    className={`inline-flex items-center justify-center text-sm font-medium transition-colors ${
                       isLast
-                        ? "rounded-full border border-[#7a4b2e] px-4 py-2 text-[#f4d7ae] hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
+                        ? "h-11 rounded-full border border-[#7a4b2e] px-5 text-[#f4d7ae] hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
                         : "text-[#f4d7ae] hover:text-[#d29a68]"
                     }`}
                   >
@@ -64,11 +64,11 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
               })}
             </nav>
 
-            <div className="flex items-center rounded-full border border-[#7a4b2e] bg-[#24150f] p-1.5">
+            <div className="flex h-11 items-center rounded-full border border-[#7a4b2e] bg-[#24150f] p-1">
               <button
                 type="button"
                 onClick={() => handleLanguageChange("da")}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                className={`inline-flex h-full items-center justify-center rounded-full px-4 text-sm font-semibold transition-all ${
                   language === "da"
                     ? "bg-[#d29a68] text-[#1b0d07] shadow-md"
                     : "text-[#caa07a] hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
@@ -81,7 +81,7 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
               <button
                 type="button"
                 onClick={() => handleLanguageChange("en")}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
+                className={`inline-flex h-full items-center justify-center rounded-full px-4 text-sm font-semibold transition-all ${
                   language === "en"
                     ? "bg-[#d29a68] text-[#1b0d07] shadow-md"
                     : "text-[#caa07a] hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
@@ -96,7 +96,7 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="rounded-full border border-[#7a4b2e] px-4 py-2 text-sm font-medium text-[#f4d7ae] transition-colors hover:bg-[#7a4b2e] hover:text-[#fff3e0] md:hidden"
+            className="inline-flex h-11 items-center justify-center rounded-full border border-[#7a4b2e] px-5 text-sm font-medium text-[#f4d7ae] transition-colors hover:bg-[#7a4b2e] hover:text-[#fff3e0] md:hidden"
             aria-label={language === "da" ? "Åbn menu" : "Open navigation menu"}
             aria-expanded={isOpen}
           >
@@ -104,6 +104,8 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
           </button>
         </div>
       </header>
+
+      <div className="h-[91px]" aria-hidden="true" />
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex min-h-screen flex-col bg-[#1b0d07] px-6 py-6 md:hidden">
@@ -123,7 +125,7 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
             <button
               type="button"
               onClick={() => setIsOpen(false)}
-              className="rounded-full border border-[#7a4b2e] px-4 py-2 text-sm font-medium text-[#f4d7ae] transition-colors hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
+              className="inline-flex h-11 items-center justify-center rounded-full border border-[#7a4b2e] px-5 text-sm font-medium text-[#f4d7ae] transition-colors hover:bg-[#7a4b2e] hover:text-[#fff3e0]"
               aria-label={
                 language === "da" ? "Luk menu" : "Close navigation menu"
               }
@@ -133,11 +135,11 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
           </div>
 
           <div className="mt-6 flex justify-center">
-            <div className="flex items-center rounded-full border border-[#7a4b2e] p-2">
+            <div className="flex h-12 items-center rounded-full border border-[#7a4b2e] p-1">
               <button
                 type="button"
                 onClick={() => handleLanguageChange("da")}
-                className={`rounded-full px-6 py-3 text-base font-semibold transition-colors ${
+                className={`inline-flex h-full items-center justify-center rounded-full px-6 text-base font-semibold transition-colors ${
                   language === "da"
                     ? "bg-[#7a4b2e] text-[#fff3e0]"
                     : "text-[#f4d7ae] hover:text-[#d29a68]"
@@ -150,7 +152,7 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
               <button
                 type="button"
                 onClick={() => handleLanguageChange("en")}
-                className={`rounded-full px-6 py-3 text-base font-semibold transition-colors ${
+                className={`inline-flex h-full items-center justify-center rounded-full px-6 text-base font-semibold transition-colors ${
                   language === "en"
                     ? "bg-[#7a4b2e] text-[#fff3e0]"
                     : "text-[#f4d7ae] hover:text-[#d29a68]"
