@@ -121,3 +121,19 @@ body {
 .section-inner {
   @apply mx-auto max-w-7xl;
 }
+
+.formInput {
+  width: 100%;
+  border-radius: 14px;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-border-card);
+  background: rgba(58, 34, 24, 0.88);
+  color: var(--color-text-main);
+  transition: 0.15s ease;
+}
+
+.formInput:focus {
+  outline: none;
+  transform: scale(1.01);
+}

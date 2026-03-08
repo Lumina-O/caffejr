@@ -132,7 +132,7 @@ export default function Hero({ language }: HeroProps) {
                 </p>
 
                 <div className="pt-1">
-                  <Button text={hero.cta} />
+                  <Button text={hero.cta} href="/booking" />
                 </div>
               </div>
 

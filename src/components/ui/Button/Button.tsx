@@ -1,16 +1,24 @@
+import Link from "next/link";
+
 type ButtonProps = {
   text: string;
   onClick?: () => void;
+  href?: string;
   type?: "button" | "submit" | "reset";
   variant?: "primary" | "secondary" | "ghost";
   size?: "sm" | "md" | "lg";
+  target?: "_self" | "_blank";
+  rel?: string;
 };
 
 export default function Button({
   text,
   onClick,
+  href,
   type = "button",
   variant = "primary",
+  target = "_self",
+  rel,
 }: ButtonProps) {
   const base =
     "inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition duration-200";
@@ -24,11 +32,36 @@ export default function Button({
       "text-[var(--color-accent)] hover:underline",
   };
 
+  const className = `${base} ${variants[variant]}`;
+
+  if (href) {
+    const isExternal = href.startsWith("http");
+
+    if (isExternal) {
+      return (
+        <a
+          href={href}
+          target={target}
+          rel={rel ?? (target === "_blank" ? "noopener noreferrer" : undefined)}
+          className={className}
+        >
+          {text}
+        </a>
+      );
+    }
+
+    return (
+      <Link href={href} className={className}>
+        {text}
+      </Link>
+    );
+  }
+
   return (
     <button
       type={type}
       onClick={onClick}
-      className={`${base} ${variants[variant]}`}
+      className={className}
     >
       {text}
     </button>
@@ -38,3 +71,4 @@ export default function Button({
 // TODO: Add loading state for async actions.
 // TODO: Add optional icon support (left/right).
 // TODO: Add fullWidth option for forms.
+// TODO: Add disabled state for unavailable booking slots or form validation.

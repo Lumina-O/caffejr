@@ -1,36 +1,303 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Caffe Jr. - Coffee Machine Service Website
 
-## Getting Started
+Caffe Jr. is a modern website for a professional coffee machine service business.
+The platform allows customers to learn about the service process, view testimonials, contact the company, and book a service appointment.
 
-First, run the development server:
+The project is built with **Next.js (App Router)** and focuses on **performance, responsiveness, and clean component architecture**.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Tech Stack
+
+Core Technologies
+
+* Next.js 14 (App Router)
+* React
+* TypeScript
+* Tailwind CSS
+
+UI & Styling
+
+* Custom UI component system
+* Responsive layouts
+* CSS variables for theming
+* Framer Motion (planned)
+
+3D & Media
+
+* React Three Fiber
+* Drei
+* GLTF models
+
+Infrastructure
+
+* Resend (email booking system)
+* Vercel / Node hosting
+
+# Features
+
+### Responsive Website
+
+The website is designed to work seamlessly across:
+
+* Mobile
+* Tablet
+* Desktop
+
+Sections automatically adjust spacing, layout, and component behavior depending on screen size.
+
+---
+
+### Multilingual Support
+
+The website supports multiple languages.
+
+Languages are handled through:
+
+```
+data/siteData.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Each section pulls content dynamically based on the selected language.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Example languages:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+* Danish
+* English
 
-## Learn More
+Language state is controlled in `page.tsx`.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Modular Component Architecture
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project follows a modular structure where each section of the page is a reusable component.
 
-## Deploy on Vercel
+Main Sections
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+* Hero
+* Help
+* Process
+* Testimonials
+* Contact
+* Footer
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Each section receives the selected language and loads content dynamically.
+
+Example:
+
+```
+<Hero language={language} />
+<Process language={language} />
+```
+
+---
+
+### Booking System
+
+Customers can submit service requests using a booking form.
+
+The form collects:
+
+* Name
+* Email
+* Phone
+* Machine type
+* Preferred service date
+* Message
+
+Spam protection:
+
+* Hidden honeypot field
+* Timestamp validation
+
+The form sends emails using **Resend API**.
+
+Environment variables:
+
+```
+RESEND_API_KEY=re_xxxxxxxxx
+BOOKING_RECEIVER_EMAIL=service@company.com
+BOOKING_SENDER_EMAIL=onboarding@resend.dev
+```
+
+---
+
+### 3D Coffee Machine Model
+
+The hero section includes a **3D coffee machine model** rendered with:
+
+* React Three Fiber
+* Drei
+* GLTF loader
+
+Features:
+
+* Environment lighting
+* Orbit controls
+* Error boundary fallback
+* Lazy loading
+
+---
+
+### UI Component System
+
+Reusable components exist inside:
+
+```
+components/ui/
+```
+
+Example:
+
+```
+Button
+```
+
+Buttons support:
+
+* primary
+* secondary
+* outline
+* responsive sizing
+
+
+# Project Structure
+
+```
+app
+ ├─ layout.tsx
+ ├─ page.tsx
+ └─ globals.css
+
+components
+ ├─ layout
+ │   ├─ Navbar
+ │   └─ Footer
+ │
+ ├─ sections
+ │   ├─ Hero
+ │   ├─ Help
+ │   ├─ Process
+ │   ├─ Testimonials
+ │   └─ Contact
+ │
+ └─ ui
+     └─ Button
+
+data
+ └─ siteData.ts
+
+public
+ ├─ images
+ ├─ models
+ └─ favicon
+```
+
+
+# Local Development
+
+Install dependencies
+
+```
+npm install
+```
+
+Run development server
+
+```
+npm run dev
+```
+
+Open browser
+
+```
+http://localhost:3000
+```
+
+# Environment Variables
+
+Create a `.env.local` file.
+
+```
+RESEND_API_KEY=
+BOOKING_RECEIVER_EMAIL=
+BOOKING_SENDER_EMAIL=
+```
+
+
+# SEO & Metadata
+
+SEO metadata is defined in:
+
+```
+app/layout.tsx
+```
+
+Includes:
+
+* title
+* description
+* favicon
+* apple icons
+
+Next.js handles favicon generation across browsers.
+
+# Browser Compatibility
+
+The site is optimized for:
+
+* Chrome
+* Safari
+* Edge
+* Firefox
+
+Icons are configured to support Apple devices and Safari.
+
+# Future Improvements
+
+Planned improvements for the next iterations.
+
+### UX Improvements
+
+* Language persistence via localStorage
+* Smooth scroll navigation
+* Section scroll snapping
+* Improved mobile navigation
+
+### Visual Improvements
+
+* Final design asset integration
+* Advanced animations
+* Better hero section interaction
+
+### Business Features
+
+* Booking calendar integration
+* Admin dashboard for bookings
+* CRM integration
+* Payment support
+
+### Performance
+
+* Image optimization
+* Model compression
+* Lazy loading improvements
+
+# Deployment
+
+Recommended platforms:
+
+* Vercel
+* Netlify
+* Railway
+
+Deploy command
+
+```
+npm run build
+```
+
+
+# License
+
+This project is proprietary and developed for the **Caffe Jr. Coffee Machine Service** platform.
