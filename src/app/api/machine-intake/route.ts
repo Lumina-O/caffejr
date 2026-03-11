@@ -432,16 +432,16 @@ export async function POST(request: Request) {
       },
     ];
 
-    console.log("About to send machine intake emails", {
-      ownerTo: bookingReceiverEmail,
-      customerTo: email,
-      from: bookingSenderEmail,
-      replyToOwner: email,
-      replyToCustomer: bookingReceiverEmail,
-      submittedAt: submittedAtFormatted,
-      photoCount: pdfPhotos.length,
-      pdfFilename,
-    });
+    // console.log("About to send machine intake emails", {
+    //   ownerTo: bookingReceiverEmail,
+    //   customerTo: email,
+    //   from: bookingSenderEmail,
+    //   replyToOwner: email,
+    //   replyToCustomer: bookingReceiverEmail,
+    //   submittedAt: submittedAtFormatted,
+    //   photoCount: pdfPhotos.length,
+    //   pdfFilename,
+    // });
 
     const ownerResponse = await resend.emails.send({
       from: bookingSenderEmail,
@@ -453,7 +453,7 @@ export async function POST(request: Request) {
       attachments: pdfAttachment,
     });
 
-    console.log("Owner Resend response:", ownerResponse);
+    // console.log("Owner Resend response:", ownerResponse);
 
     if (ownerResponse.error) {
       console.error("Owner Resend error:", ownerResponse.error);
@@ -474,7 +474,7 @@ export async function POST(request: Request) {
       attachments: pdfAttachment,
     });
 
-    console.log("Customer Resend response:", customerResponse);
+    // console.log("Customer Resend response:", customerResponse);
 
     if (customerResponse.error) {
       console.error("Customer Resend error:", customerResponse.error);
@@ -488,7 +488,7 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log("Machine intake emails sent successfully.");
+    // console.log("Machine intake emails sent successfully.");
 
     return NextResponse.json({
       message: "Machine intake submitted successfully.",
