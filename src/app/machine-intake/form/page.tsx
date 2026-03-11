@@ -176,6 +176,7 @@ export default function MachineIntakeFormPage() {
   const router = useRouter();
   const startedAtRef = useRef<number | null>(null);
   const signaturePadRef = useRef<SignaturePadHandle | null>(null);
+  const submitButtonClickedRef = useRef(false);
 
   const [formData, setFormData] =
     useState<MachineIntakeFormData>(initialFormData);
@@ -186,6 +187,8 @@ export default function MachineIntakeFormPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [stepError, setStepError] = useState("");
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+
+  const isLastStep = currentStep === STEPS.length - 1;
 
   const progressPercentage = useMemo(() => {
     return ((currentStep + 1) / STEPS.length) * 100;
@@ -296,6 +299,7 @@ export default function MachineIntakeFormPage() {
     }
 
     setStepError("");
+    setMessage("");
     setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -307,9 +311,34 @@ export default function MachineIntakeFormPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  function handleFormKeyDown(
+    e: React.KeyboardEvent<HTMLFormElement>,
+  ) {
+    if (e.key !== "Enter") return;
+
+    const target = e.target as HTMLElement | null;
+    const tagName = target?.tagName?.toLowerCase();
+
+    if (tagName === "textarea") return;
+
+    if (!isLastStep) {
+      e.preventDefault();
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     markStarted();
+
+    if (!isLastStep) {
+      return;
+    }
+
+    if (!submitButtonClickedRef.current) {
+      return;
+    }
+
+    submitButtonClickedRef.current = false;
 
     const latestSignature = getLatestSignature();
     setSignatureDataUrl(latestSignature);
@@ -381,8 +410,6 @@ export default function MachineIntakeFormPage() {
       setIsSubmitting(false);
     }
   }
-
-  const isLastStep = currentStep === STEPS.length - 1;
 
   return (
     <main
@@ -474,6 +501,7 @@ export default function MachineIntakeFormPage() {
 
             <form
               onSubmit={handleSubmit}
+              onKeyDown={handleFormKeyDown}
               onFocusCapture={markStarted}
               onPointerDownCapture={markStarted}
               className="mt-8 space-y-5"
@@ -851,7 +879,7 @@ export default function MachineIntakeFormPage() {
                       />
                       <ReviewItem
                         label="Contact if above limit"
-                        value="Yes - always"
+                        value="Yes"
                       />
                       <ReviewItem
                         label="Cleaning service (+600 kr)"
@@ -956,6 +984,9 @@ export default function MachineIntakeFormPage() {
                 ) : (
                   <button
                     type="submit"
+                    onClick={() => {
+                      submitButtonClickedRef.current = true;
+                    }}
                     disabled={isSubmitting}
                     className="inline-flex min-h-[56px] items-center justify-center rounded-full px-6 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                     style={{

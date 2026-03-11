@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { generateMachineIntakePdf } from "@/lib/pdf/generateMachineReportPdf";
 
 export const runtime = "nodejs";
 
@@ -108,6 +109,16 @@ function formatSubmittedAt(date: Date) {
   }).format(date);
 }
 
+function buildPdfFilename(customerName: string) {
+  const safeName = customerName
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+
+  return `machine-intake-${safeName || "customer"}.pdf`;
+}
+
 export async function POST(request: Request) {
   try {
     if (!resendApiKey || !resend) {
@@ -150,6 +161,7 @@ export async function POST(request: Request) {
 
     const submittedAt = new Date();
     const submittedAtFormatted = formatSubmittedAt(submittedAt);
+    const timeSpentFormatted = formatDuration(timeSpent);
 
     if (website) {
       console.warn("Honeypot field triggered. Submission blocked.");
@@ -238,6 +250,14 @@ export async function POST(request: Request) {
       );
     }
 
+    const signatureParts = dataUrlToBase64Parts(signatureDataUrl);
+    if (!signatureParts) {
+      return NextResponse.json(
+        { message: "Invalid signature format." },
+        { status: 400 },
+      );
+    }
+
     const uploadedFiles = formData.getAll("machinePhotos");
     const photoFiles = uploadedFiles.filter(
       (file): file is File => file instanceof File && file.size > 0,
@@ -264,35 +284,40 @@ export async function POST(request: Request) {
       }
     }
 
-    const attachments: Array<{ filename: string; content: string }> = [];
+    const pdfPhotos = await Promise.all(
+      photoFiles.map(async (file, index) => ({
+        name: file.name || `machine-photo-${index + 1}`,
+        mimeType: file.type,
+        bytes: Buffer.from(await file.arrayBuffer()),
+      })),
+    );
 
-    const signatureParts = dataUrlToBase64Parts(signatureDataUrl);
-    if (!signatureParts) {
-      return NextResponse.json(
-        { message: "Invalid signature format." },
-        { status: 400 },
-      );
-    }
-
-    attachments.push({
-      filename: "signature.png",
-      content: signatureParts.base64,
+    const reportPdfBuffer = await generateMachineIntakePdf({
+      customerName,
+      email,
+      phone,
+      brand,
+      model,
+      machineType,
+      issueSummary,
+      maxRepairAmount,
+      addCleaningService,
+      acceptedTerms,
+      submittedAtFormatted,
+      timeSpentFormatted,
+      photoCount: pdfPhotos.length,
+      signatureDataUrl,
+      photos: pdfPhotos,
     });
 
-    for (let i = 0; i < photoFiles.length; i += 1) {
-      const file = photoFiles[i];
-      const buffer = Buffer.from(await file.arrayBuffer());
+    const pdfFilename = buildPdfFilename(customerName);
 
-      attachments.push({
-        filename: file.name || `machine-photo-${i + 1}.jpg`,
-        content: buffer.toString("base64"),
-      });
-    }
+    const ownerSubject = `Machine Intake - ${customerName} - ${brand} ${model}`;
+    const customerSubject = `Your machine intake receipt - ${brand} ${model}`;
 
     const safeIssueSummary = escapeHtml(issueSummary).replace(/\n/g, "<br />");
-    const emailSubject = `Machine Intake - ${customerName} - ${brand} ${model}`;
 
-    const html = `
+    const ownerHtml = `
       <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
         <h1 style="margin-bottom: 8px;">New Machine Intake Submission</h1>
         <p style="margin-top: 0; color: #6b7280;">
@@ -314,7 +339,6 @@ export async function POST(request: Request) {
         </ul>
 
         <h2>Issue Details</h2>
-
         <p><strong>Issue summary:</strong><br />${safeIssueSummary}</p>
 
         <h2>Service Preferences</h2>
@@ -327,18 +351,37 @@ export async function POST(request: Request) {
         <ul>
           <li><strong>Created date:</strong> ${escapeHtml(submittedAtFormatted)}</li>
           <li><strong>Accepted terms:</strong> ${escapeHtml(formatBoolean(acceptedTerms))}</li>
-          <li><strong>Uploaded photos:</strong> ${photoFiles.length}</li>
-          <li><strong>Signature attached:</strong> Yes</li>
-          <li><strong>Time spent on form:</strong> ${escapeHtml(formatDuration(timeSpent))}</li>
+          <li><strong>Uploaded photos:</strong> ${pdfPhotos.length}</li>
+          <li><strong>Signature included in PDF:</strong> Yes</li>
+          <li><strong>Time spent on form:</strong> ${escapeHtml(timeSpentFormatted)}</li>
         </ul>
 
         <p style="margin-top: 24px; color: #6b7280;">
-          The signature and machine photos are attached to this email.
+          The full PDF report is attached to this email.
         </p>
       </div>
     `;
 
-    const text = [
+    const customerHtml = `
+      <div style="font-family: Arial, sans-serif; color: #111827; line-height: 1.6;">
+        <h1 style="margin-bottom: 8px;">We received your machine intake form</h1>
+        <p>Hi ${escapeHtml(customerName)},</p>
+        <p>
+          Thank you for submitting your machine intake form.
+          We have attached the full PDF copy of your submission for your records.
+        </p>
+
+        <h2>Quick Summary</h2>
+        <ul>
+          <li><strong>Brand:</strong> ${escapeHtml(brand)}</li>
+          <li><strong>Model:</strong> ${escapeHtml(model)}</li>
+          <li><strong>Machine type:</strong> ${escapeHtml(formatMachineType(machineType))}</li>
+          <li><strong>Submitted:</strong> ${escapeHtml(submittedAtFormatted)}</li>
+        </ul>
+      </div>
+    `;
+
+    const ownerText = [
       "New Machine Intake Submission",
       "",
       "Customer Details",
@@ -361,46 +404,91 @@ export async function POST(request: Request) {
       "Submission Meta",
       `Created date: ${submittedAtFormatted}`,
       `Accepted terms: ${formatBoolean(acceptedTerms)}`,
-      `Uploaded photos: ${photoFiles.length}`,
-      "Signature attached: Yes",
-      `Time spent on form: ${formatDuration(timeSpent)}`,
+      `Uploaded photos: ${pdfPhotos.length}`,
+      "Signature included in PDF: Yes",
+      `Time spent on form: ${timeSpentFormatted}`,
+      "",
+      "The full PDF report is attached.",
     ].join("\n");
 
-    console.log("About to send machine intake email", {
-      to: bookingReceiverEmail,
+    const customerText = [
+      "We received your machine intake form",
+      "",
+      `Hi ${customerName},`,
+      "",
+      "Thank you for submitting your machine intake form.",
+      "The full PDF copy of your submission is attached for your records.",
+      "",
+      `Brand: ${brand}`,
+      `Model: ${model}`,
+      `Machine type: ${formatMachineType(machineType)}`,
+      `Submitted: ${submittedAtFormatted}`,
+    ].join("\n");
+
+    const pdfAttachment = [
+      {
+        filename: pdfFilename,
+        content: reportPdfBuffer.toString("base64"),
+      },
+    ];
+
+    console.log("About to send machine intake emails", {
+      ownerTo: bookingReceiverEmail,
+      customerTo: email,
       from: bookingSenderEmail,
-      replyTo: email,
-      subject: emailSubject,
+      replyToOwner: email,
+      replyToCustomer: bookingReceiverEmail,
       submittedAt: submittedAtFormatted,
-      photoCount: photoFiles.length,
-      attachmentCount: attachments.length,
-      attachmentNames: attachments.map((file) => file.filename),
+      photoCount: pdfPhotos.length,
+      pdfFilename,
     });
 
-    const response = await resend.emails.send({
+    const ownerResponse = await resend.emails.send({
       from: bookingSenderEmail,
       to: bookingReceiverEmail,
       replyTo: email,
-      subject: emailSubject,
-      html,
-      text,
-      attachments,
+      subject: ownerSubject,
+      html: ownerHtml,
+      text: ownerText,
+      attachments: pdfAttachment,
     });
 
-    console.log("Resend response:", response);
+    console.log("Owner Resend response:", ownerResponse);
 
-    const { error } = response;
-
-    if (error) {
-      console.error("Resend error:", error);
+    if (ownerResponse.error) {
+      console.error("Owner Resend error:", ownerResponse.error);
 
       return NextResponse.json(
-        { message: "Failed to send the machine intake email." },
+        { message: "Failed to send the machine intake email to the owner." },
         { status: 500 },
       );
     }
 
-    console.log("Machine intake email sent successfully.");
+    const customerResponse = await resend.emails.send({
+      from: bookingSenderEmail,
+      to: email,
+      replyTo: bookingReceiverEmail,
+      subject: customerSubject,
+      html: customerHtml,
+      text: customerText,
+      attachments: pdfAttachment,
+    });
+
+    console.log("Customer Resend response:", customerResponse);
+
+    if (customerResponse.error) {
+      console.error("Customer Resend error:", customerResponse.error);
+
+      return NextResponse.json(
+        {
+          message:
+            "The form was submitted, but the customer confirmation email failed to send.",
+        },
+        { status: 500 },
+      );
+    }
+
+    console.log("Machine intake emails sent successfully.");
 
     return NextResponse.json({
       message: "Machine intake submitted successfully.",
@@ -417,7 +505,7 @@ export async function POST(request: Request) {
 
 /* TODO:
 - Save each submission to a database so the intake exists even if email delivery fails
-- Add file count and total upload size limits for extra protection
-- Generate a PDF intake summary and attach it alongside the signature/images
-- Add optional customer confirmation email after successful submission
+- Add total upload size and max photo count protection
+- Add unique report IDs and show them in both email and PDF
+- Add page numbers and company branding to the PDF
 */
