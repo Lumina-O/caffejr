@@ -72,17 +72,6 @@ function formatMachineType(value: string) {
   }
 }
 
-function formatPowerStatus(value: string) {
-  switch (value) {
-    case "yes":
-      return "Yes";
-    case "no":
-      return "No";
-    default:
-      return value || "Not provided";
-  }
-}
-
 function formatBoolean(value: boolean) {
   return value ? "Yes" : "No";
 }
@@ -109,6 +98,14 @@ function dataUrlToBase64Parts(dataUrl: string) {
     mimeType: match[1],
     base64: match[2],
   };
+}
+
+function formatSubmittedAt(date: Date) {
+  return new Intl.DateTimeFormat("da-DK", {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone: "Europe/Copenhagen",
+  }).format(date);
 }
 
 export async function POST(request: Request) {
@@ -140,17 +137,9 @@ export async function POST(request: Request) {
     const brand = getString(formData, "brand");
     const model = getString(formData, "model");
     const machineType = getString(formData, "machineType");
-    const serialNumber = getString(formData, "serialNumber");
-    const machineAge = getString(formData, "machineAge");
 
     const issueSummary = getString(formData, "issueSummary");
-    const issueStarted = getString(formData, "issueStarted");
-    const powerStatus = getString(formData, "powerStatus");
-    const leakingWater = getBoolean(formData, "leakingWater");
-    const errorCode = getString(formData, "errorCode");
 
-    const preferredDropoffDate = getString(formData, "preferredDropoffDate");
-    const quoteBeforeRepair = getBoolean(formData, "quoteBeforeRepair");
     const maxRepairAmount = getNumber(formData, "maxRepairAmount");
     const addCleaningService = getBoolean(formData, "addCleaningService");
 
@@ -158,6 +147,9 @@ export async function POST(request: Request) {
     const website = getString(formData, "website");
     const signatureDataUrl = getString(formData, "signatureDataUrl");
     const timeSpent = getNumber(formData, "timeSpent") ?? 0;
+
+    const submittedAt = new Date();
+    const submittedAtFormatted = formatSubmittedAt(submittedAt);
 
     if (website) {
       console.warn("Honeypot field triggered. Submission blocked.");
@@ -222,11 +214,11 @@ export async function POST(request: Request) {
       );
     }
 
-    if (maxRepairAmount === null || maxRepairAmount < 1000) {
+    if (maxRepairAmount === null || maxRepairAmount < 1500) {
       return NextResponse.json(
         {
           message:
-            "The minimum amount before contact must be at least 1000 kr.",
+            "The minimum amount before contact must be at least 1500 kr.",
         },
         { status: 400 },
       );
@@ -319,30 +311,21 @@ export async function POST(request: Request) {
           <li><strong>Brand:</strong> ${escapeHtml(brand)}</li>
           <li><strong>Model:</strong> ${escapeHtml(model)}</li>
           <li><strong>Machine type:</strong> ${escapeHtml(formatMachineType(machineType))}</li>
-          <li><strong>Approximate age:</strong> ${escapeHtml(machineAge || "Not provided")}</li>
-          <li><strong>Serial number:</strong> ${escapeHtml(serialNumber || "Not provided")}</li>
         </ul>
 
         <h2>Issue Details</h2>
-        <ul>
-          <li><strong>Issue started:</strong> ${escapeHtml(issueStarted || "Not provided")}</li>
-          <li><strong>Power status:</strong> ${escapeHtml(formatPowerStatus(powerStatus))}</li>
-          <li><strong>Error code:</strong> ${escapeHtml(errorCode || "Not provided")}</li>
-          <li><strong>Leaking water:</strong> ${escapeHtml(formatBoolean(leakingWater))}</li>
-        </ul>
 
         <p><strong>Issue summary:</strong><br />${safeIssueSummary}</p>
 
         <h2>Service Preferences</h2>
         <ul>
-          <li><strong>Preferred drop-off date:</strong> ${escapeHtml(preferredDropoffDate || "Not provided")}</li>
-          <li><strong>Quote before repair:</strong> ${escapeHtml(formatBoolean(quoteBeforeRepair))}</li>
           <li><strong>Max amount before contact:</strong> ${escapeHtml(String(maxRepairAmount))} kr</li>
-          <li><strong>Cleaning service (+450 kr):</strong> ${escapeHtml(formatBoolean(addCleaningService))}</li>
+          <li><strong>Cleaning service (+600 kr):</strong> ${escapeHtml(formatBoolean(addCleaningService))}</li>
         </ul>
 
         <h2>Submission Meta</h2>
         <ul>
+          <li><strong>Created date:</strong> ${escapeHtml(submittedAtFormatted)}</li>
           <li><strong>Accepted terms:</strong> ${escapeHtml(formatBoolean(acceptedTerms))}</li>
           <li><strong>Uploaded photos:</strong> ${photoFiles.length}</li>
           <li><strong>Signature attached:</strong> Yes</li>
@@ -367,23 +350,16 @@ export async function POST(request: Request) {
       `Brand: ${brand}`,
       `Model: ${model}`,
       `Machine type: ${formatMachineType(machineType)}`,
-      `Approximate age: ${machineAge || "Not provided"}`,
-      `Serial number: ${serialNumber || "Not provided"}`,
       "",
       "Issue Details",
-      `Issue started: ${issueStarted || "Not provided"}`,
-      `Power status: ${formatPowerStatus(powerStatus)}`,
-      `Error code: ${errorCode || "Not provided"}`,
-      `Leaking water: ${formatBoolean(leakingWater)}`,
       `Issue summary: ${issueSummary}`,
       "",
       "Service Preferences",
-      `Preferred drop-off date: ${preferredDropoffDate || "Not provided"}`,
-      `Quote before repair: ${formatBoolean(quoteBeforeRepair)}`,
       `Max amount before contact: ${maxRepairAmount} kr`,
-      `Cleaning service (+450 kr): ${formatBoolean(addCleaningService)}`,
+      `Cleaning service (+600 kr): ${formatBoolean(addCleaningService)}`,
       "",
       "Submission Meta",
+      `Created date: ${submittedAtFormatted}`,
       `Accepted terms: ${formatBoolean(acceptedTerms)}`,
       `Uploaded photos: ${photoFiles.length}`,
       "Signature attached: Yes",
@@ -395,6 +371,7 @@ export async function POST(request: Request) {
       from: bookingSenderEmail,
       replyTo: email,
       subject: emailSubject,
+      submittedAt: submittedAtFormatted,
       photoCount: photoFiles.length,
       attachmentCount: attachments.length,
       attachmentNames: attachments.map((file) => file.filename),

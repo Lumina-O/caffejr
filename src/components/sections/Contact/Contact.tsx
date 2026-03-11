@@ -16,6 +16,7 @@ export default function Contact({ language }: ContactProps) {
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
+  const [mapKey, setMapKey] = useState(0);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -25,7 +26,13 @@ export default function Contact({ language }: ContactProps) {
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [mapLoaded]);
+  }, [mapLoaded, mapKey]);
+
+  const reloadMap = () => {
+    setMapLoaded(false);
+    setMapFailed(false);
+    setMapKey((prev) => prev + 1);
+  };
 
   return (
     <section
@@ -142,6 +149,7 @@ export default function Contact({ language }: ContactProps) {
           >
             {!mapFailed ? (
               <iframe
+                key={mapKey}
                 title="Google Map - Vigerslevvej 50A, 2500 Valby"
                 src={mapSrc}
                 className="h-full min-h-[320px] w-full md:min-h-[420px]"
@@ -158,12 +166,26 @@ export default function Contact({ language }: ContactProps) {
                   >
                     Map
                   </p>
+
                   <p
                     className="mt-3 text-sm leading-relaxed md:text-base"
                     style={{ color: "var(--color-text-muted)" }}
                   >
-                    Map cant be rendered
+                    Map cannot be rendered.
                   </p>
+
+                  <div className="mt-5">
+                    <button
+                      onClick={reloadMap}
+                      className="rounded-lg px-4 py-2 text-sm font-semibold transition"
+                      style={{
+                        backgroundColor: "var(--color-accent)",
+                        color: "#1b120e",
+                      }}
+                    >
+                      Reload map
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

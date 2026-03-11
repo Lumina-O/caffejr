@@ -49,14 +49,14 @@ function CoffeeMachineModel({
 }: {
   mode?: "background" | "inline";
 }) {
-  const { scene } = useGLTF("/models/coffee-machine.glb");
+  const { scene } = useGLTF("/models/Rocket-Espresso.glb");
 
   if (mode === "background") {
     return (
       <primitive
         object={scene}
-        scale={4.8}
-        position={[0.2, -2.4, -0.8]}
+        scale={8}
+        position={[-1.5, -2.4, -1]}
         rotation={[0.08, -0.9, 0]}
       />
     );
@@ -65,8 +65,8 @@ function CoffeeMachineModel({
   return (
     <primitive
       object={scene}
-      scale={1.2}
-      position={[0, -1.1, 0]}
+      scale={2.6}
+      position={[-1.2, -2.2, 0]}
       rotation={[0, Math.PI / 6, 0]}
     />
   );
@@ -80,12 +80,12 @@ function CoffeeMachineScene({
   const cameraProps =
     mode === "background"
       ? {
-          position: [0, 1.4, 28] as [number, number, number],
-          fov: 50,
+          position: [0, 1.6, 10] as [number, number, number],
+          fov: 40,
         }
       : {
-          position: [0, 1.1, 4.1] as [number, number, number],
-          fov: 40,
+          position: [0, 1.2, 2.2] as [number, number, number],
+          fov: 32,
         };
 
   return (
@@ -98,9 +98,10 @@ function CoffeeMachineScene({
       <CoffeeMachineModel mode={mode} />
 
       <Environment preset="city" />
+
       <OrbitControls
         autoRotate
-        autoRotateSpeed={mode === "background" ? 0.9 : 2}
+        autoRotateSpeed={mode === "background" ? 0.8 : 1.2}
         enablePan={false}
         enableZoom={false}
       />
@@ -115,13 +116,16 @@ function getWebGLSupport() {
 
   try {
     const canvas = document.createElement("canvas");
-    return !!canvas.getContext("webgl") || !!canvas.getContext("experimental-webgl");
+    return (
+      !!canvas.getContext("webgl") ||
+      !!canvas.getContext("experimental-webgl")
+    );
   } catch {
     return false;
   }
 }
 
-useGLTF.preload("/models/coffee-machine.glb");
+useGLTF.preload("/models/Rocket-Espresso.glb");
 
 export default function CoffeeMachine3D({
   onError,
@@ -148,6 +152,6 @@ export default function CoffeeMachine3D({
   );
 }
 
-// TODO: Fine-tune background mode scale and camera after testing the actual .glb proportions.
-// TODO: Add an optional soft fade-in once the model has loaded.
+// TODO: Auto-center model using bounding box so any new .glb fits perfectly.
+// TODO: Add soft fade-in when model loads.
 // TODO: Reduce DPR on weaker devices if performance drops.

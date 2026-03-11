@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Field from "@/components/ui/Field/Field";
 import TextInput from "@/components/ui/TextInput/TextInput";
 import CheckboxCard from "@/components/ui/CheckboxCard/CheckboxCard";
@@ -20,17 +21,9 @@ type MachineIntakeFormData = {
   brand: string;
   model: string;
   machineType: string;
-  serialNumber: string;
-  machineAge: string;
 
   issueSummary: string;
-  issueStarted: string;
-  powerStatus: string;
-  leakingWater: boolean;
-  errorCode: string;
 
-  preferredDropoffDate: string;
-  quoteBeforeRepair: boolean;
   maxRepairAmount: string;
   addCleaningService: boolean;
 
@@ -47,18 +40,10 @@ const initialFormData: MachineIntakeFormData = {
   brand: "",
   model: "",
   machineType: "",
-  serialNumber: "",
-  machineAge: "",
 
   issueSummary: "",
-  issueStarted: "",
-  powerStatus: "",
-  leakingWater: false,
-  errorCode: "",
 
-  preferredDropoffDate: "",
-  quoteBeforeRepair: false,
-  maxRepairAmount: "1000",
+  maxRepairAmount: "1500",
   addCleaningService: false,
 
   acceptedTerms: false,
@@ -114,6 +99,40 @@ const STEPS = [
 
 const TERMS_TEXT = `Prisoverslag for tjek og tilbud på indleveret udstyr koster 400 kr. uden undtagelse, også hvis service fravælges. Vi foretager fejlsøgning og udarbejder et estimat, før service påbegyndes, hvis prisen overstiger det maksimale beløb, I har valgt. Ved udfyldelse af denne formular samt indlevering af udstyr accepteres dette gebyr samt udskiftning af reservedele, som vi vurderer er nødvendige for reparationen.`;
 
+const BRAND_OPTIONS = [
+  "De'Longhi",
+  "Sage",
+  "Jura",
+  "Siemens",
+  "Melitta",
+  "Philips",
+  "Saeco",
+  "Miele",
+  "Nivona",
+  "Krups",
+  "Bosch",
+  "Gaggia",
+  "Rocket",
+  "Rancilio",
+  "ECM",
+  "La Marzocco",
+  "Nuova Simonelli",
+  "Ascaso",
+  "Breville",
+  "Lavazza",
+];
+
+const MAX_REPAIR_AMOUNT_OPTIONS = [
+  "1500",
+  "2000",
+  "2500",
+  "3000",
+  "4000",
+  "5000",
+  "7500",
+  "10000",
+];
+
 function submitMachineIntakeWithProgress(
   body: FormData,
   onProgress?: (progress: number) => void,
@@ -154,6 +173,7 @@ function submitMachineIntakeWithProgress(
 }
 
 export default function MachineIntakeFormPage() {
+  const router = useRouter();
   const startedAtRef = useRef<number | null>(null);
   const signaturePadRef = useRef<SignaturePadHandle | null>(null);
 
@@ -233,17 +253,17 @@ export default function MachineIntakeFormPage() {
 
     if (step === 4) {
       if (!formData.maxRepairAmount.trim()) {
-        return "Please enter the maximum amount before we should contact you.";
+        return "Please select the maximum amount before we should contact you.";
       }
 
       const parsedAmount = Number(formData.maxRepairAmount);
 
       if (Number.isNaN(parsedAmount)) {
-        return "Please enter a valid maximum amount.";
+        return "Please select a valid maximum amount.";
       }
 
-      if (parsedAmount < 1000) {
-        return "The minimum amount before contact must be at least 1000 kr.";
+      if (parsedAmount < 1500) {
+        return "The minimum amount before contact must be at least 1500 kr.";
       }
     }
 
@@ -345,9 +365,6 @@ export default function MachineIntakeFormPage() {
       }
 
       setUploadProgress(100);
-      setMessage(
-        result.data.message || "Machine intake submitted successfully.",
-      );
       setFormData(initialFormData);
       setMachinePhotos([]);
       setSignatureDataUrl("");
@@ -355,11 +372,7 @@ export default function MachineIntakeFormPage() {
       startedAtRef.current = null;
       signaturePadRef.current?.clear();
 
-      window.scrollTo({ top: 0, behavior: "smooth" });
-
-      setTimeout(() => {
-        setUploadProgress(null);
-      }, 600);
+      router.push("/machine-intake/complete");
     } catch (error) {
       console.error("Submit error:", error);
       setMessage("Something went wrong. Please try again.");
@@ -514,13 +527,21 @@ export default function MachineIntakeFormPage() {
                 {currentStep === 1 && (
                   <div className="grid gap-4 md:grid-cols-2">
                     <Field label="Brand" required>
-                      <TextInput
-                        name="brand"
-                        placeholder="De'Longhi"
-                        value={formData.brand}
-                        onChange={handleChange}
-                        required
-                      />
+                      <div>
+                        <TextInput
+                          name="brand"
+                          placeholder="Search or type brand"
+                          value={formData.brand}
+                          onChange={handleChange}
+                          list="machine-brand-options"
+                          required
+                        />
+                        <datalist id="machine-brand-options">
+                          {BRAND_OPTIONS.map((brand) => (
+                            <option key={brand} value={brand} />
+                          ))}
+                        </datalist>
+                      </div>
                     </Field>
 
                     <Field label="Model" required>
@@ -533,7 +554,11 @@ export default function MachineIntakeFormPage() {
                       />
                     </Field>
 
-                    <Field label="Machine type" required>
+                    <Field
+                      label="Machine type"
+                      required
+                      className="md:col-span-2"
+                    >
                       <div className="relative">
                         <select
                           name="machineType"
@@ -567,29 +592,11 @@ export default function MachineIntakeFormPage() {
                         </span>
                       </div>
                     </Field>
-
-                    <Field label="Approximate age">
-                      <TextInput
-                        name="machineAge"
-                        placeholder="2 years"
-                        value={formData.machineAge}
-                        onChange={handleChange}
-                      />
-                    </Field>
-
-                    <Field label="Serial number" className="md:col-span-2">
-                      <TextInput
-                        name="serialNumber"
-                        placeholder="Optional"
-                        value={formData.serialNumber}
-                        onChange={handleChange}
-                      />
-                    </Field>
                   </div>
                 )}
 
                 {currentStep === 2 && (
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4">
                     <Field
                       label="Describe the problem"
                       required
@@ -597,7 +604,7 @@ export default function MachineIntakeFormPage() {
                     >
                       <textarea
                         name="issueSummary"
-                        placeholder="Example: The machine turns on, makes noise, but stops before brewing and leaks water underneath."
+                        placeholder="Example: The machine makes noise, stops before brewing, or is not working as expected."
                         value={formData.issueSummary}
                         onChange={handleChange}
                         className="min-h-[140px] w-full resize-y rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-2"
@@ -609,64 +616,6 @@ export default function MachineIntakeFormPage() {
                         required
                       />
                     </Field>
-
-                    <Field label="When did the issue start?">
-                      <TextInput
-                        name="issueStarted"
-                        placeholder="Example: 1 week ago"
-                        value={formData.issueStarted}
-                        onChange={handleChange}
-                      />
-                    </Field>
-
-                    <Field label="Does the machine turn on?">
-                      <div className="relative">
-                        <select
-                          name="powerStatus"
-                          value={formData.powerStatus}
-                          onChange={handleChange}
-                          className="w-full appearance-none rounded-2xl border px-4 py-3 pr-12 text-sm leading-6 outline-none transition focus:ring-2"
-                          style={{
-                            WebkitAppearance: "none",
-                            MozAppearance: "none",
-                            appearance: "none",
-                            borderColor: "var(--color-border-soft)",
-                            backgroundColor: "var(--color-bg-card)",
-                            color: "var(--color-text-main)",
-                          }}
-                        >
-                          <option value="">Select</option>
-                          <option value="yes">Yes</option>
-                          <option value="no">No</option>
-                        </select>
-
-                        <span
-                          aria-hidden="true"
-                          className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs"
-                          style={{ color: "var(--color-text-muted)" }}
-                        >
-                          ▼
-                        </span>
-                      </div>
-                    </Field>
-
-                    <Field label="Error code">
-                      <TextInput
-                        name="errorCode"
-                        placeholder="Optional"
-                        value={formData.errorCode}
-                        onChange={handleChange}
-                      />
-                    </Field>
-
-                    <div className="flex items-end">
-                      <CheckboxCard
-                        name="leakingWater"
-                        checked={formData.leakingWater}
-                        onChange={handleChange}
-                        label="Machine is leaking water"
-                      />
-                    </div>
                   </div>
                 )}
 
@@ -692,61 +641,62 @@ export default function MachineIntakeFormPage() {
                     />
 
                     <InfoBox>
-                      Photos help us identify visible damage, leaking, missing
-                      parts, display errors, and overall machine condition
-                      before drop-off.
+                      Photos help us identify visible damage, missing parts,
+                      display errors, and overall machine condition faster.
                     </InfoBox>
                   </div>
                 )}
 
                 {currentStep === 4 && (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Field label="Preferred drop-off date">
-                      <TextInput
-                        type="date"
-                        name="preferredDropoffDate"
-                        value={formData.preferredDropoffDate}
-                        onChange={handleChange}
-                      />
-                    </Field>
+                  <div className="space-y-4">
+                    <InfoBox>
+                      We will contact you before continuing if the repair
+                      exceeds your chosen amount.
+                    </InfoBox>
 
-                    <Field label="Max amount before we contact you" required>
-                      <TextInput
-                        type="number"
-                        min="1000"
-                        step="1"
-                        name="maxRepairAmount"
-                        placeholder="Minimum 1000"
-                        value={formData.maxRepairAmount}
-                        onChange={handleChange}
-                        required
-                      />
-                    </Field>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <Field label="Max amount before we contact you" required>
+                        <div className="relative">
+                          <select
+                            name="maxRepairAmount"
+                            value={formData.maxRepairAmount}
+                            onChange={handleChange}
+                            className="w-full appearance-none rounded-2xl border px-4 py-3 pr-12 text-sm leading-6 outline-none transition focus:ring-2"
+                            style={{
+                              WebkitAppearance: "none",
+                              MozAppearance: "none",
+                              appearance: "none",
+                              borderColor: "var(--color-border-soft)",
+                              backgroundColor: "var(--color-bg-card)",
+                              color: "var(--color-text-main)",
+                            }}
+                            required
+                          >
+                            {MAX_REPAIR_AMOUNT_OPTIONS.map((amount) => (
+                              <option key={amount} value={amount}>
+                                {amount} kr
+                              </option>
+                            ))}
+                          </select>
 
-                    <div className="md:col-span-2">
-                      <InfoBox>
-                        We will contact you before continuing if the repair
-                        exceeds your chosen amount. Minimum threshold is 1000
-                        kr.
-                      </InfoBox>
-                    </div>
+                          <span
+                            aria-hidden="true"
+                            className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-xs"
+                            style={{ color: "var(--color-text-muted)" }}
+                          >
+                            ▼
+                          </span>
+                        </div>
+                      </Field>
 
-                    <div className="flex items-end">
-                      <CheckboxCard
-                        name="quoteBeforeRepair"
-                        checked={formData.quoteBeforeRepair}
-                        onChange={handleChange}
-                        label="Request quote before repair"
-                      />
-                    </div>
-
-                    <div className="flex items-end">
-                      <CheckboxCard
-                        name="addCleaningService"
-                        checked={formData.addCleaningService}
-                        onChange={handleChange}
-                        label="Add coffee machine cleaning service (+450 kr)"
-                      />
+                      <div className="flex items-end">
+                        <CheckboxCard
+                          name="addCleaningService"
+                          checked={formData.addCleaningService}
+                          onChange={handleChange}
+                          label="Add coffee machine cleaning service (+600 kr)"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -846,36 +796,12 @@ export default function MachineIntakeFormPage() {
                         label="Machine type"
                         value={formatMachineType(formData.machineType)}
                       />
-                      <ReviewItem
-                        label="Approximate age"
-                        value={formData.machineAge}
-                      />
-                      <ReviewItem
-                        label="Serial number"
-                        value={formData.serialNumber}
-                      />
                     </ReviewGroup>
 
                     <ReviewGroup title="Issue Details">
                       <ReviewItem
                         label="Issue summary"
                         value={formData.issueSummary}
-                      />
-                      <ReviewItem
-                        label="Issue started"
-                        value={formData.issueStarted}
-                      />
-                      <ReviewItem
-                        label="Power status"
-                        value={formatPowerStatus(formData.powerStatus)}
-                      />
-                      <ReviewItem
-                        label="Error code"
-                        value={formData.errorCode}
-                      />
-                      <ReviewItem
-                        label="Leaking water"
-                        value={formData.leakingWater ? "Yes" : "No"}
                       />
                     </ReviewGroup>
 
@@ -920,23 +846,15 @@ export default function MachineIntakeFormPage() {
 
                     <ReviewGroup title="Service Preferences">
                       <ReviewItem
-                        label="Preferred drop-off date"
-                        value={formData.preferredDropoffDate}
-                      />
-                      <ReviewItem
                         label="Max amount before contact"
-                        value={`${formData.maxRepairAmount || "1000"} kr`}
+                        value={`${formData.maxRepairAmount} kr`}
                       />
                       <ReviewItem
                         label="Contact if above limit"
                         value="Yes - always"
                       />
                       <ReviewItem
-                        label="Quote before repair"
-                        value={formData.quoteBeforeRepair ? "Yes" : "No"}
-                      />
-                      <ReviewItem
-                        label="Cleaning service (+450 kr)"
+                        label="Cleaning service (+600 kr)"
                         value={formData.addCleaningService ? "Yes" : "No"}
                       />
                     </ReviewGroup>
@@ -1116,17 +1034,6 @@ function formatMachineType(value: string) {
       return "Filter coffee";
     case "commercial":
       return "Commercial machine";
-    default:
-      return value;
-  }
-}
-
-function formatPowerStatus(value: string) {
-  switch (value) {
-    case "yes":
-      return "Yes";
-    case "no":
-      return "No";
     default:
       return value;
   }
