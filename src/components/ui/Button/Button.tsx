@@ -17,11 +17,18 @@ export default function Button({
   href,
   type = "button",
   variant = "primary",
+  size = "md",
   target = "_self",
   rel,
 }: ButtonProps) {
   const base =
-    "inline-flex items-center justify-center rounded-full px-5 py-2 text-sm font-semibold transition duration-200";
+    "inline-flex items-center justify-center rounded-full font-semibold transition duration-200";
+
+  const sizes = {
+    sm: "px-4 py-2 text-sm",
+    md: "px-5 py-2 text-sm",
+    lg: "px-6 py-3 text-base",
+  };
 
   const variants = {
     primary:
@@ -32,12 +39,15 @@ export default function Button({
       "text-[var(--color-accent)] hover:underline",
   };
 
-  const className = `${base} ${variants[variant]}`;
+  const className = `${base} ${sizes[size]} ${variants[variant]}`;
 
   if (href) {
-    const isExternal = href.startsWith("http");
+    const isNativeAnchor =
+      href.startsWith("http") ||
+      href.startsWith("mailto:") ||
+      href.startsWith("tel:");
 
-    if (isExternal) {
+    if (isNativeAnchor) {
       return (
         <a
           href={href}
@@ -58,11 +68,7 @@ export default function Button({
   }
 
   return (
-    <button
-      type={type}
-      onClick={onClick}
-      className={className}
-    >
+    <button type={type} onClick={onClick} className={className}>
       {text}
     </button>
   );

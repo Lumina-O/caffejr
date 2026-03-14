@@ -1,42 +1,20 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { ReactNode } from "react";
+import { LanguageProvider } from "@/context/LanguageContext";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Caffe Jr. - Coffee Machine Service",
-  description: "Professional coffee machine service and repair",
-  icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/public/images/logo.png", sizes: "32x32", type: "image/png" },
-    ],
-    shortcut: "/favicon.ico",
-    apple: [
-      { url: "/public/images/logo.png", sizes: "180x180", type: "image/png" },
-    ],
-  },
+type RootLayoutProps = {
+  children: ReactNode;
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
+    <html lang="da">
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
       </body>
     </html>
   );
 }
+
+// TODO: Update the html lang attribute dynamically if you later want full accessibility alignment with the selected language.
+// TODO: Add global providers here if theme or auth context is introduced later.

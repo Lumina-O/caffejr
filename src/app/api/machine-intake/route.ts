@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { generateMachineIntakePdf } from "@/lib/pdf/generateMachineReportPdf";
+import { generateMachineIntakePdf } from "@/lib/generateMachineReportPdf";
 
 export const runtime = "nodejs";
 
+const isTest = true;
 const resendApiKey = process.env.RESEND_API_KEY;
-const bookingReceiverEmail = process.env.BOOKING_TEST_EMAIL;
-const bookingSenderEmail =
-  process.env.BOOKING_SENDER_EMAIL || "onboarding@resend.dev";
+
+const bookingReceiverEmail = isTest
+  ? process.env.BOOKING_TEST_EMAIL
+  : process.env.BOOKING_RECEIVER_EMAIL;
+
+const bookingSenderEmail = isTest
+  ? process.env.BOOKING_SENDER_EMAIL_TEST
+  : process.env.BOOKING_SENDER_EMAIL;
 
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
@@ -131,10 +137,35 @@ export async function POST(request: Request) {
     }
 
     if (!bookingReceiverEmail) {
-      console.error("Missing BOOKING_TEST_EMAIL in environment variables.");
+      console.error(
+        isTest
+          ? "Missing BOOKING_TEST_EMAIL in environment variables."
+          : "Missing BOOKING_RECEIVER_EMAIL in environment variables.",
+      );
 
       return NextResponse.json(
-        { message: "Missing BOOKING_TEST_EMAIL in environment variables." },
+        {
+          message: isTest
+            ? "Missing BOOKING_TEST_EMAIL in environment variables."
+            : "Missing BOOKING_RECEIVER_EMAIL in environment variables.",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!bookingSenderEmail) {
+      console.error(
+        isTest
+          ? "Missing BOOKING_SENDER_EMAIL_TEST in environment variables."
+          : "Missing BOOKING_SENDER_EMAIL in environment variables.",
+      );
+
+      return NextResponse.json(
+        {
+          message: isTest
+            ? "Missing BOOKING_SENDER_EMAIL_TEST in environment variables."
+            : "Missing BOOKING_SENDER_EMAIL in environment variables.",
+        },
         { status: 500 },
       );
     }
@@ -425,23 +456,12 @@ export async function POST(request: Request) {
       `Submitted: ${submittedAtFormatted}`,
     ].join("\n");
 
-    const pdfAttachment = [
+    const attachments = [
       {
         filename: pdfFilename,
         content: reportPdfBuffer.toString("base64"),
       },
     ];
-
-    // console.log("About to send machine intake emails", {
-    //   ownerTo: bookingReceiverEmail,
-    //   customerTo: email,
-    //   from: bookingSenderEmail,
-    //   replyToOwner: email,
-    //   replyToCustomer: bookingReceiverEmail,
-    //   submittedAt: submittedAtFormatted,
-    //   photoCount: pdfPhotos.length,
-    //   pdfFilename,
-    // });
 
     const ownerResponse = await resend.emails.send({
       from: bookingSenderEmail,
@@ -450,10 +470,8 @@ export async function POST(request: Request) {
       subject: ownerSubject,
       html: ownerHtml,
       text: ownerText,
-      attachments: pdfAttachment,
+      attachments,
     });
-
-    // console.log("Owner Resend response:", ownerResponse);
 
     if (ownerResponse.error) {
       console.error("Owner Resend error:", ownerResponse.error);
@@ -471,10 +489,8 @@ export async function POST(request: Request) {
       subject: customerSubject,
       html: customerHtml,
       text: customerText,
-      attachments: pdfAttachment,
+      attachments,
     });
-
-    // console.log("Customer Resend response:", customerResponse);
 
     if (customerResponse.error) {
       console.error("Customer Resend error:", customerResponse.error);
@@ -487,8 +503,6 @@ export async function POST(request: Request) {
         { status: 500 },
       );
     }
-
-    // console.log("Machine intake emails sent successfully.");
 
     return NextResponse.json({
       message: "Machine intake submitted successfully.",
@@ -504,6 +518,7 @@ export async function POST(request: Request) {
 }
 
 /* TODO:
+- Replace `isTest = true` with NODE_ENV or a dedicated env flag like BOOKING_USE_TEST_MODE
 - Save each submission to a database so the intake exists even if email delivery fails
 - Add total upload size and max photo count protection
 - Add unique report IDs and show them in both email and PDF

@@ -130,7 +130,7 @@ export default function Process({ language }: ProcessProps) {
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Button text={process.buttons[0]} variant="primary" size="sm" />
-          <Button text={process.buttons[1]} variant="secondary" size="sm" />
+          <Button href="/availability" text={process.buttons[1]} variant="secondary" size="sm" />
         </div>
       </div>
     </section>

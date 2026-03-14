@@ -134,8 +134,18 @@ export default function Contact({ language }: ContactProps) {
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button text="Kontakt os" variant="primary" size="md" />
-              <Button text="Ring nu" variant="secondary" size="md" />
+              <Button
+                text="Kontakt os"
+                href={`mailto:${contact.email}`}
+                variant="primary"
+                size="md"
+              />
+              <Button
+                text="Ring nu"
+                href={`tel:${contact.phone.replace(/\s+/g, "")}`}
+                variant="secondary"
+                size="md"
+              />
             </div>
           </div>
 

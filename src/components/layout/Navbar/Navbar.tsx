@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { getSiteData, type Language } from "@/data/siteData";
 
 type NavbarProps = {
@@ -11,9 +12,22 @@ type NavbarProps = {
 
 export default function Navbar({ language, onLanguageChange }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
   const data = getSiteData(language);
 
-  const navLinks = data.nav;
+  const isHomePage = pathname === "/";
+
+  const navLinks = data.nav.map((link) => {
+    const cleanHref = link.href.replace(/^\/?#/, "");
+    const href = isHomePage ? `#${cleanHref}` : `/#${cleanHref}`;
+
+    return {
+      ...link,
+      href,
+    };
+  });
+
+  const brandHref = isHomePage ? "#top" : "/#top";
 
   const handleLinkClick = () => {
     setIsOpen(false);
@@ -29,7 +43,7 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
       <header className="fixed left-0 right-0 top-0 z-50 w-full border-b border-[#3a2418]/60 bg-[#1b0d07]/95 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-5 md:px-12">
           <a
-            href="#top"
+            href={brandHref}
             className="flex items-center gap-3 text-2xl font-bold tracking-wide text-[#f4d7ae] transition-opacity hover:opacity-80"
           >
             <Image
@@ -110,7 +124,11 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex min-h-screen flex-col bg-[#1b0d07] px-6 py-6 md:hidden">
           <div className="flex items-center justify-between border-b border-[#3a2418]/60 pb-4">
-            <span className="flex items-center gap-3 text-2xl font-bold tracking-wide text-[#f4d7ae]">
+            <a
+              href={brandHref}
+              onClick={handleLinkClick}
+              className="flex items-center gap-3 text-2xl font-bold tracking-wide text-[#f4d7ae]"
+            >
               <Image
                 src="/images/logo.png"
                 alt={`${data.brand} logo`}
@@ -120,7 +138,7 @@ export default function Navbar({ language, onLanguageChange }: NavbarProps) {
                 priority
               />
               <span>{data.brand}</span>
-            </span>
+            </a>
 
             <button
               type="button"

@@ -22,6 +22,7 @@ type MachineIntakeFormData = {
   model: string;
   machineType: string;
 
+  issueCategory: string;
   issueSummary: string;
 
   maxRepairAmount: string;
@@ -41,6 +42,7 @@ const initialFormData: MachineIntakeFormData = {
   model: "",
   machineType: "",
 
+  issueCategory: "",
   issueSummary: "",
 
   maxRepairAmount: "1500",
@@ -68,7 +70,7 @@ const STEPS = [
     id: 2,
     eyebrow: "Step 3",
     title: "Issue Details",
-    description: "Describe what is happening so we can prepare in advance.",
+    description: "Choose the issue category and add extra details if needed.",
   },
   {
     id: 3,
@@ -100,26 +102,59 @@ const STEPS = [
 const TERMS_TEXT = `Prisoverslag for tjek og tilbud på indleveret udstyr koster 400 kr. uden undtagelse, også hvis service fravælges. Vi foretager fejlsøgning og udarbejder et estimat, før service påbegyndes, hvis prisen overstiger det maksimale beløb, I har valgt. Ved udfyldelse af denne formular samt indlevering af udstyr accepteres dette gebyr samt udskiftning af reservedele, som vi vurderer er nødvendige for reparationen.`;
 
 const BRAND_OPTIONS = [
-  "De'Longhi",
-  "Sage",
-  "Jura",
-  "Siemens",
-  "Melitta",
-  "Philips",
-  "Saeco",
-  "Miele",
-  "Nivona",
-  "Krups",
-  "Bosch",
-  "Gaggia",
-  "Rocket",
-  "Rancilio",
+  "Animo",
+  "Astoria",
+  "Bezzera",
+  "Brasilia",
+  "Carimali",
+  "Casadio",
+  "Ceado",
+  "Cimbali",
+  "Dalla Corte",
   "ECM",
-  "La Marzocco",
+  "Elektra",
+  "Eureka",
+  "Faema",
+  "Fiorenzato",
+  "Fracino",
+  "Futurmat",
+  "Gaggia",
+  "Izzo",
+  "Isomac",
+  "La Piccola",
+  "Lelit",
+  "Marzocco",
+  "Magister",
   "Nuova Simonelli",
-  "Ascaso",
-  "Breville",
-  "Lavazza",
+  "Obel",
+  "Profitec",
+  "Quick Mill",
+  "Rancilio",
+  "Sage",
+  "Rocket",
+  "Spinel",
+  "Promac",
+  "Vibiemme",
+  "Wega",
+];
+
+const ISSUE_CATEGORY_OPTIONS = [
+  "Behøv for en almindelig service",
+  "Taber vand fra gruppe",
+  "Taber vand ind i maskine",
+  "Er kalket til og ønsker fuld afkalkning ca. 5-6000 kr",
+  "Varmer ikke længere",
+  "Slå hpfi hjemme",
+  "Taber damp",
+  "Ingen damp",
+  "Intet pumpe tryk",
+  "Tænder ikke",
+  "Intet eller lidt vand kommer ud",
+  "Udstyr larmer",
+  "Fejlkode på display",
+  "Vil ikke kværne",
+  "Siver ind fra maskine",
+  "Andet",
 ];
 
 const MAX_REPAIR_AMOUNT_OPTIONS = [
@@ -176,7 +211,6 @@ export default function MachineIntakeFormPage() {
   const router = useRouter();
   const startedAtRef = useRef<number | null>(null);
   const signaturePadRef = useRef<SignaturePadHandle | null>(null);
-  const submitButtonClickedRef = useRef(false);
 
   const [formData, setFormData] =
     useState<MachineIntakeFormData>(initialFormData);
@@ -251,7 +285,16 @@ export default function MachineIntakeFormPage() {
     }
 
     if (step === 2) {
-      if (!formData.issueSummary.trim()) return "Please describe the problem.";
+      if (!formData.issueCategory.trim()) {
+        return "Please choose or write an issue category.";
+      }
+
+      if (
+        formData.issueCategory.trim().toLowerCase() === "andet" &&
+        !formData.issueSummary.trim()
+      ) {
+        return "Please describe the problem when selecting 'Andet'.";
+      }
     }
 
     if (step === 4) {
@@ -311,9 +354,7 @@ export default function MachineIntakeFormPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function handleFormKeyDown(
-    e: React.KeyboardEvent<HTMLFormElement>,
-  ) {
+  function handleFormKeyDown(e: React.KeyboardEvent<HTMLFormElement>) {
     if (e.key !== "Enter") return;
 
     const target = e.target as HTMLElement | null;
@@ -321,9 +362,7 @@ export default function MachineIntakeFormPage() {
 
     if (tagName === "textarea") return;
 
-    if (!isLastStep) {
-      e.preventDefault();
-    }
+    e.preventDefault();
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -334,11 +373,12 @@ export default function MachineIntakeFormPage() {
       return;
     }
 
-    if (!submitButtonClickedRef.current) {
+    const nativeEvent = e.nativeEvent as SubmitEvent;
+    const submitter = nativeEvent.submitter as HTMLButtonElement | null;
+
+    if (!submitter || submitter.name !== "finalSubmit") {
       return;
     }
-
-    submitButtonClickedRef.current = false;
 
     const latestSignature = getLatestSignature();
     setSignatureDataUrl(latestSignature);
@@ -370,7 +410,16 @@ export default function MachineIntakeFormPage() {
     try {
       const body = new FormData();
 
+      const combinedIssueSummary = formData.issueSummary.trim()
+        ? `Kategori: ${formData.issueCategory}\n\nEkstra detaljer:\n${formData.issueSummary}`
+        : `Kategori: ${formData.issueCategory}`;
+
       Object.entries(formData).forEach(([key, value]) => {
+        if (key === "issueSummary") {
+          body.append("issueSummary", combinedIssueSummary);
+          return;
+        }
+
         body.append(key, String(value));
       });
 
@@ -605,10 +654,8 @@ export default function MachineIntakeFormPage() {
                         >
                           <option value="">Select machine type</option>
                           <option value="espresso">Espresso machine</option>
-                          <option value="bean-to-cup">Bean to cup</option>
-                          <option value="capsule">Capsule</option>
-                          <option value="filter">Filter coffee</option>
-                          <option value="commercial">Commercial machine</option>
+                          <option value="grinder">Grinder</option>
+                          <option value="roaster">Coffee Roaster</option>
                         </select>
 
                         <span
@@ -626,13 +673,34 @@ export default function MachineIntakeFormPage() {
                 {currentStep === 2 && (
                   <div className="grid gap-4">
                     <Field
-                      label="Describe the problem"
+                      label="Issue category"
                       required
+                      className="md:col-span-2"
+                    >
+                      <div>
+                        <TextInput
+                          name="issueCategory"
+                          placeholder="Search or write an issue category"
+                          value={formData.issueCategory}
+                          onChange={handleChange}
+                          list="issue-category-options"
+                          required
+                        />
+                        <datalist id="issue-category-options">
+                          {ISSUE_CATEGORY_OPTIONS.map((issue) => (
+                            <option key={issue} value={issue} />
+                          ))}
+                        </datalist>
+                      </div>
+                    </Field>
+
+                    <Field
+                      label="Extra details"
                       className="md:col-span-2"
                     >
                       <textarea
                         name="issueSummary"
-                        placeholder="Example: The machine makes noise, stops before brewing, or is not working as expected."
+                        placeholder="Add extra details if needed."
                         value={formData.issueSummary}
                         onChange={handleChange}
                         className="min-h-[140px] w-full resize-y rounded-2xl border px-4 py-3 text-sm outline-none transition focus:ring-2"
@@ -641,7 +709,6 @@ export default function MachineIntakeFormPage() {
                           backgroundColor: "var(--color-bg-card)",
                           color: "var(--color-text-main)",
                         }}
-                        required
                       />
                     </Field>
                   </div>
@@ -828,7 +895,11 @@ export default function MachineIntakeFormPage() {
 
                     <ReviewGroup title="Issue Details">
                       <ReviewItem
-                        label="Issue summary"
+                        label="Issue category"
+                        value={formData.issueCategory}
+                      />
+                      <ReviewItem
+                        label="Extra details"
                         value={formData.issueSummary}
                       />
                     </ReviewGroup>
@@ -877,10 +948,7 @@ export default function MachineIntakeFormPage() {
                         label="Max amount before contact"
                         value={`${formData.maxRepairAmount} kr`}
                       />
-                      <ReviewItem
-                        label="Contact if above limit"
-                        value="Yes"
-                      />
+                      <ReviewItem label="Contact if above limit" value="Yes" />
                       <ReviewItem
                         label="Cleaning service (+600 kr)"
                         value={formData.addCleaningService ? "Yes" : "No"}
@@ -984,9 +1052,8 @@ export default function MachineIntakeFormPage() {
                 ) : (
                   <button
                     type="submit"
-                    onClick={() => {
-                      submitButtonClickedRef.current = true;
-                    }}
+                    name="finalSubmit"
+                    value="true"
                     disabled={isSubmitting}
                     className="inline-flex min-h-[56px] items-center justify-center rounded-full px-6 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                     style={{
@@ -1057,14 +1124,10 @@ function formatMachineType(value: string) {
   switch (value) {
     case "espresso":
       return "Espresso machine";
-    case "bean-to-cup":
-      return "Bean to cup";
-    case "capsule":
-      return "Capsule";
-    case "filter":
-      return "Filter coffee";
-    case "commercial":
-      return "Commercial machine";
+    case "grinder":
+      return "Grinder";
+    case "roaster":
+      return "Coffee Roaster";
     default:
       return value;
   }
