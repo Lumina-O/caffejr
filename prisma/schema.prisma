@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum BookingStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+enum IntakeStatus {
+  received
+  in_progress
+  completed
+  rejected
+}
+
+enum UserRole {
+  user
+  staff
+  admin
+  super_admin
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+model Booking {
+  id          String        @id @default(uuid())
+  referenceId String        @unique
+  name        String
+  email       String
+  phone       String
+  machineType String
+  preferredDate String
+  message     String
+  status      BookingStatus @default(pending)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model MachineIntake {
+  id                String       @id @default(uuid())
+  referenceId       String       @unique
+  customerName      String
+  email             String
+  phone             String
+  brand             String
+  model             String
+  machineType       String
+  issueSummary      String
+  maxRepairAmount   Int
+  addCleaningService Boolean
+  acceptedTerms     Boolean
+  photoCount        Int          @default(0)
+  timeSpentMs       Int          @default(0)
+  status            IntakeStatus @default(received)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  role      UserRole @default(user)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

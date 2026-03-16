@@ -33,6 +33,12 @@ npm install
 cp .env.example .env.local
 # Fill in the required values — see Environment Variables section below
 
+# Run database migrations (first time or after schema changes)
+npx prisma migrate dev
+
+# Generate Prisma client (if generated files are missing)
+npx prisma generate
+
 # Start development server
 npm run dev
 ```
@@ -252,7 +258,19 @@ BOOKING_RECEIVER_EMAIL=   # Admin email that receives booking notifications
 BOOKING_SENDER_EMAIL=     # From address for production emails
 BOOKING_TEST_EMAIL=       # Email address used during development/testing
 BOOKING_SENDER_EMAIL_TEST=# From address used in development
+
+# Database — Neon (Postgres)
+DATABASE_URL=             # Neon connection string (postgresql://...)
 ```
+
+### Database setup
+
+1. Create a free project at [neon.tech](https://neon.tech)
+2. Copy the connection string from the Neon dashboard (use the **pooled** connection string for production)
+3. Paste it as `DATABASE_URL` in `.env.local`
+4. Run migrations: `npx prisma migrate dev --name init`
+
+After pulling new code that includes schema changes, always run `npx prisma migrate dev` to apply them locally.
 
 Never commit `.env.local` or any file containing real API keys. The `.gitignore` already excludes `.env*.local`.
 

@@ -171,7 +171,7 @@ const MAX_REPAIR_AMOUNT_OPTIONS = [
 function submitMachineIntakeWithProgress(
   body: FormData,
   onProgress?: (progress: number) => void,
-): Promise<{ ok: boolean; status: number; data: { message?: string } }> {
+): Promise<{ ok: boolean; status: number; data: { message?: string; referenceId?: string } }> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
@@ -184,7 +184,7 @@ function submitMachineIntakeWithProgress(
     };
 
     xhr.onload = () => {
-      let parsed: { message?: string } = {};
+      let parsed: { message?: string; referenceId?: string } = {};
 
       try {
         parsed = xhr.responseText ? JSON.parse(xhr.responseText) : {};
@@ -450,7 +450,8 @@ export default function MachineIntakeFormPage() {
       startedAtRef.current = null;
       signaturePadRef.current?.clear();
 
-      router.push("/machine-intake/complete");
+      const ref = result.data.referenceId;
+      router.push(`/machine-intake/complete${ref ? `?ref=${ref}` : ""}`);
     } catch (error) {
       console.error("Submit error:", error);
       setMessage("Something went wrong. Please try again.");

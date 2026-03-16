@@ -6,20 +6,20 @@ Caffe Jr. is a Next.js application for a coffee machine service business. The fr
 
 ---
 
-## Milestone 1 — Database & Data Persistence
+## Milestone 1 — Database & Data Persistence ✅
 
-The project currently has no database. All data is ephemeral (email-only) or hardcoded mock data.
+Stack chosen: **Neon (serverless Postgres) + Prisma 7**
 
 ### Subtasks
 
-- [ ] Choose and provision a database (e.g. Supabase, PlanetScale, Neon, or self-hosted Postgres)
-- [ ] Design schema: `bookings`, `machine_intakes`, `tickets`, `users`, `sessions`
-- [ ] Set up ORM or query layer (e.g. Prisma, Drizzle)
-- [ ] Save booking form submissions to database on API call
-- [ ] Save machine intake form submissions to database on API call
-- [ ] Generate and store unique reference/report IDs per submission
-- [ ] Surface submission reference number on `/machine-intake/complete` page
-- [ ] Add database environment variables to `.env.local` and Vercel/hosting
+- [x] Choose and provision a database — **Neon (Postgres)**
+- [x] Design schema: `Booking`, `MachineIntake`, `User` models in `prisma/schema.prisma`
+- [x] Set up ORM — **Prisma 7** with singleton client at `src/lib/db.ts`
+- [x] Save booking form submissions to database on API call
+- [x] Save machine intake form submissions to database on API call
+- [x] Generate and store unique reference/report IDs per submission (`src/lib/referenceId.ts`, format: `CJ-YYYYMMDD-XXXX`)
+- [x] Surface submission reference number on `/machine-intake/complete` page
+- [ ] **You must do:** Provision a Neon project, copy the `DATABASE_URL`, and add it to `.env.local` — then run `npx prisma migrate dev --name init`
 
 ---
 
@@ -192,7 +192,7 @@ Production readiness, CI/CD, and hosting configuration.
 
 | Milestone | Area | Status |
 |-----------|------|--------|
-| 1 — Database & Persistence | Backend | Not started |
+| 1 — Database & Persistence | Backend | **Done** (needs Neon provisioning) |
 | 2 — Real Authentication | Backend | Not started |
 | 3 — Admin Dashboard Real Data | Full-stack | Not started |
 | 4 — Machine Intake Polish | Frontend / PDF | In progress |

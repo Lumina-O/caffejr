@@ -1,6 +1,12 @@
 import Link from "next/link";
 
-export default function MachineIntakeCompletePage() {
+export default async function MachineIntakeCompletePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string }>;
+}) {
+  const { ref } = await searchParams;
+
   return (
     <main
       className="min-h-screen px-4 py-6 md:px-6 md:py-8 lg:px-8 lg:py-10"
@@ -37,6 +43,35 @@ export default function MachineIntakeCompletePage() {
             can now review your machine intake.
           </p>
 
+          {ref && (
+            <div
+              className="mt-6 rounded-2xl border px-5 py-4"
+              style={{
+                backgroundColor: "var(--color-bg-surface)",
+                borderColor: "var(--color-border-soft)",
+              }}
+            >
+              <p
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Reference number
+              </p>
+              <p
+                className="mt-1 font-mono text-lg font-bold tracking-wide"
+                style={{ color: "var(--color-text-main)" }}
+              >
+                {ref}
+              </p>
+              <p
+                className="mt-1 text-xs"
+                style={{ color: "var(--color-text-muted)" }}
+              >
+                Keep this for your records. We will include it in your confirmation email.
+              </p>
+            </div>
+          )}
+
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/"
@@ -64,7 +99,6 @@ export default function MachineIntakeCompletePage() {
         </div>
       </div>
 
-      {/* TODO: Add a reference number or submission ID here once submissions are saved to a database. */}
     </main>
   );
 }

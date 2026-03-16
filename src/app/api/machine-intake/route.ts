@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { generateMachineIntakePdf } from "@/lib/generateMachineReportPdf";
+import { db } from "@/lib/db";
+import { generateReferenceId } from "@/lib/referenceId";
 
 export const runtime = "nodejs";
 
@@ -315,6 +317,26 @@ export async function POST(request: Request) {
       }
     }
 
+    const referenceId = generateReferenceId();
+
+    await db.machineIntake.create({
+      data: {
+        referenceId,
+        customerName,
+        email,
+        phone,
+        brand,
+        model,
+        machineType,
+        issueSummary,
+        maxRepairAmount,
+        addCleaningService,
+        acceptedTerms,
+        photoCount: photoFiles.length,
+        timeSpentMs: timeSpent,
+      },
+    });
+
     const pdfPhotos = await Promise.all(
       photoFiles.map(async (file, index) => ({
         name: file.name || `machine-photo-${index + 1}`,
@@ -380,6 +402,7 @@ export async function POST(request: Request) {
 
         <h2>Submission Meta</h2>
         <ul>
+          <li><strong>Reference:</strong> ${referenceId}</li>
           <li><strong>Created date:</strong> ${escapeHtml(submittedAtFormatted)}</li>
           <li><strong>Accepted terms:</strong> ${escapeHtml(formatBoolean(acceptedTerms))}</li>
           <li><strong>Uploaded photos:</strong> ${pdfPhotos.length}</li>
@@ -401,6 +424,7 @@ export async function POST(request: Request) {
           Thank you for submitting your machine intake form.
           We have attached the full PDF copy of your submission for your records.
         </p>
+        <p><strong>Your reference number:</strong> ${referenceId}</p>
 
         <h2>Quick Summary</h2>
         <ul>
@@ -506,6 +530,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       message: "Machine intake submitted successfully.",
+      referenceId,
     });
   } catch (error) {
     console.error("Machine intake POST error:", error);

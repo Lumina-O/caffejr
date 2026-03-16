@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { db } from "@/lib/db";
+import { generateReferenceId } from "@/lib/referenceId";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -97,6 +99,20 @@ export async function POST(request: Request) {
       rateLimitStore.set(ip, existingEntry);
     }
 
+    const referenceId = generateReferenceId();
+
+    await db.booking.create({
+      data: {
+        referenceId,
+        name,
+        email,
+        phone,
+        machineType,
+        preferredDate,
+        message,
+      },
+    });
+
     const adminEmailResult = await resend.emails.send({
       from: bookingSender,
       to: bookingReceiver,
@@ -105,6 +121,7 @@ export async function POST(request: Request) {
       html: `
         <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #1f1f1f;">
           <h2>New Booking Request</h2>
+          <p><strong>Reference:</strong> ${referenceId}</p>
           <p><strong>Name:</strong> ${escapeHtml(name)}</p>
           <p><strong>Email:</strong> ${escapeHtml(email)}</p>
           <p><strong>Phone:</strong> ${escapeHtml(phone)}</p>
@@ -134,6 +151,7 @@ export async function POST(request: Request) {
           <h2>Booking request received</h2>
           <p>Hi ${escapeHtml(name)},</p>
           <p>Thank you for contacting us. We have received your booking request and will get back to you as soon as possible to confirm the appointment.</p>
+          <p><strong>Reference number:</strong> ${referenceId}</p>
           <p><strong>Your request details:</strong></p>
           <ul>
             <li><strong>Phone:</strong> ${escapeHtml(phone)}</li>
