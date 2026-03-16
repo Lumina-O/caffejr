@@ -44,6 +44,9 @@ cp .env.example .env.local
 # Apply database migrations
 npx prisma migrate dev --name init
 
+# Seed initial admin user (set SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD in .env.local first)
+npm run db:seed
+
 # Start development server
 npm run dev
 ```
@@ -59,6 +62,7 @@ npm run dev      # Start development server
 npm run build    # Production build
 npm run start    # Start production server
 npm run lint     # Run ESLint
+npm run db:seed  # Seed initial admin user (run once after first migration)
 
 npx prisma migrate dev   # Apply pending migrations
 npx prisma studio        # Open Prisma database browser

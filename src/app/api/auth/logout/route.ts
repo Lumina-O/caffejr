@@ -1,24 +1,9 @@
 import { NextResponse } from "next/server";
+import { getSession } from "@/lib/session";
 
 export async function POST() {
-  const response = NextResponse.json({ success: true });
+  const session = await getSession();
+  session.destroy();
 
-  response.cookies.set("user_role", "", {
-    path: "/",
-    expires: new Date(0),
-  });
-
-  response.cookies.set("user_email", "", {
-    path: "/",
-    expires: new Date(0),
-  });
-
-  return response;
+  return NextResponse.json({ success: true });
 }
-
-/*
-TODO:
-- If using JWT later, invalidate token here
-- If using sessions, destroy the session
-- Optionally add logout audit logs
-*/

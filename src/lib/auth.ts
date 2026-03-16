@@ -1,24 +1,20 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { AuthUser, UserRole } from "@/types/auth";
 import { roleAtLeast } from "@/lib/permissions";
+import { getSession } from "@/lib/session";
 
-// TODO: Replace cookie-based auth with real session/JWT validation and database user lookup.
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  const cookieStore = await cookies();
+  const session = await getSession();
 
-  const role = cookieStore.get("user_role")?.value as UserRole | undefined;
-  const email = cookieStore.get("user_email")?.value;
-
-  if (!role || !email) {
+  if (!session.userId || !session.role) {
     return null;
   }
 
   return {
-    id: "1",
-    name: email.split("@")[0],
-    email,
-    role,
+    id: session.userId,
+    name: session.name,
+    email: session.email,
+    role: session.role as UserRole,
   };
 }
 

@@ -222,9 +222,17 @@ All API routes must follow the existing patterns:
 
 1. **Honeypot + time trap** — include on all public-facing form endpoints
 2. **IP-based rate limiting** — applied per route
-3. **Input validation** — validate all fields before processing
-4. **HTML escaping** — escape all user input before use in emails or documents
-5. Return consistent JSON: `{ success: true }` or `{ error: "message" }`
+3. **Input validation** — validate all fields before processing; enforce length limits before expensive operations (e.g. cap password at 72 chars before bcrypt)
+4. **HTML escaping** — escape all user input via `escapeHtml()` before use in emails or documents
+5. **Return consistent JSON** — `{ success: true }` or `{ error: "message" }`; never leak internal error details to the client
+
+### Security rules
+
+- **SQL injection** — not possible via Prisma (parameterized queries). Never use `db.$queryRawUnsafe()` with user input.
+- **Timing attacks** — when a lookup returns nothing (e.g. user not found), still run the expensive operation (bcrypt compare) with a dummy value so response time is consistent and attackers cannot enumerate valid records.
+- **Brute force** — auth endpoints must track failed attempts per account in the database (not in-memory) and lock after a threshold. In-memory counters do not survive serverless instance restarts.
+- **Security headers** — defined globally in `next.config.ts`. Do not weaken the CSP without a documented reason.
+- **Secrets** — never hardcode credentials, API keys, or session secrets. All secrets must come from environment variables.
 
 ### Styling
 
@@ -261,6 +269,14 @@ BOOKING_SENDER_EMAIL_TEST=# From address used in development
 
 # Database — Neon (Postgres)
 DATABASE_URL=             # Neon connection string (postgresql://...)
+
+# Session — iron-session
+SESSION_SECRET=           # Random secret, min 32 characters (generate with: openssl rand -hex 32)
+
+# Seed script — initial admin user
+SEED_ADMIN_EMAIL=         # Email for the first super_admin account
+SEED_ADMIN_PASSWORD=      # Password for the first super_admin account
+SEED_ADMIN_NAME=          # Display name (optional, defaults to "Admin")
 ```
 
 ### Database setup

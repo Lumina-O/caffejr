@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:seed": "tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "npm run db:seed"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.2",
@@ -14,7 +18,9 @@
     "@prisma/client": "^7.5.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
+    "bcrypt": "^6.0.0",
     "framer-motion": "^12.35.0",
+    "iron-session": "^8.0.4",
     "next": "16.1.6",
     "pdf-lib": "^1.17.1",
     "react": "19.2.3",
@@ -25,6 +31,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -33,6 +40,7 @@
     "eslint-config-next": "16.1.6",
     "prisma": "^7.5.0",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

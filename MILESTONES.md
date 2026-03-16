@@ -6,7 +6,7 @@ Caffe Jr. is a Next.js application for a coffee machine service business. The fr
 
 ---
 
-## Milestone 1 — Database & Data Persistence ✅
+## Milestone 1 — Database & Data Persistence
 
 Stack chosen: **Neon (serverless Postgres) + Prisma 7**
 
@@ -19,24 +19,24 @@ Stack chosen: **Neon (serverless Postgres) + Prisma 7**
 - [x] Save machine intake form submissions to database on API call
 - [x] Generate and store unique reference/report IDs per submission (`src/lib/referenceId.ts`, format: `CJ-YYYYMMDD-XXXX`)
 - [x] Surface submission reference number on `/machine-intake/complete` page
-- [ ] **You must do:** Provision a Neon project, copy the `DATABASE_URL`, and add it to `.env.local` — then run `npx prisma migrate dev --name init`
+- [x] **You must do:** Provision a Neon project, copy the `DATABASE_URL`, and add it to `.env.local` — then run `npx prisma migrate dev --name init`
 
 ---
 
 ## Milestone 2 — Real Authentication & Session Management
 
-Login is currently a mock with hardcoded credentials and insecure cookies.
+Stack chosen: **iron-session** (encrypted cookie sessions) + **bcrypt** (password hashing)
 
 ### Subtasks
 
-- [ ] Store users in database with hashed passwords (bcrypt or argon2)
-- [ ] Replace mock `/api/auth/login` with real database lookup
-- [ ] Issue secure, signed session tokens (or use a library like NextAuth / Lucia Auth)
-- [ ] Validate session token in middleware (not just cookie presence)
-- [ ] Implement `/api/auth/logout` to invalidate server-side session
-- [ ] Seed initial `super_admin` user via a migration or setup script
-- [ ] Add brute-force protection to login (lockout after N failed attempts)
-- [ ] Support "remember me" with long-lived vs. short-lived session expiry
+- [x] Store users in database with hashed passwords — **bcrypt** (12 rounds)
+- [x] Replace mock `/api/auth/login` with real Neon/Prisma database lookup
+- [x] Issue secure encrypted session cookies — **iron-session** (`caffejr_session` cookie)
+- [x] Validate session token in middleware (checks `caffejr_session` cookie)
+- [x] Implement `/api/auth/logout` using `session.destroy()`
+- [x] Seed initial `super_admin` user via `npm run db:seed` (`prisma/seed.ts`)
+- [x] Support "remember me" — 8hr session vs 30-day session
+- [x] Add brute-force protection — 5 attempts then 15-minute lockout, tracked in database (works across serverless instances)
 
 ---
 
@@ -133,9 +133,12 @@ Current protection (honeypot + time trap) is minimal and rate limiting is in-mem
 - [ ] Add Cloudflare Turnstile or hCaptcha to booking and intake forms
 - [ ] Add stricter email and phone validation (format + disposable email detection)
 - [ ] Audit all API routes for missing input validation
-- [ ] Add Content Security Policy headers
-- [ ] Ensure all user-facing inputs are HTML-escaped before storage and rendering
-- [ ] Add rate limiting to auth endpoints (separate from form endpoints)
+- [x] Add security headers (CSP, X-Frame-Options, HSTS, Referrer-Policy, Permissions-Policy) — added to `next.config.ts`
+- [x] Ensure all user-facing inputs are HTML-escaped before storage and rendering — `escapeHtml()` used across all email routes
+- [x] Add rate limiting to auth endpoints — brute force lockout (5 attempts, 15-min lockout) tracked in database
+- [x] Input length limits on login (email 254 chars, password 72 chars)
+- [x] Timing attack prevention on login — dummy bcrypt compare when user not found
+- [x] bcrypt DoS prevention — password length capped before hashing
 
 ---
 
@@ -192,8 +195,8 @@ Production readiness, CI/CD, and hosting configuration.
 
 | Milestone | Area | Status |
 |-----------|------|--------|
-| 1 — Database & Persistence | Backend | **Done** (needs Neon provisioning) |
-| 2 — Real Authentication | Backend | Not started |
+| 1 — Database & Persistence | Backend | **Done** |
+| 2 — Real Authentication | Backend | **Done** |
 | 3 — Admin Dashboard Real Data | Full-stack | Not started |
 | 4 — Machine Intake Polish | Frontend / PDF | In progress |
 | 5 — Booking System | Full-stack | Partially done |
