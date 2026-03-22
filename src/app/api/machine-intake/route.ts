@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { put } from "@vercel/blob";
 import { generateMachineIntakePdf } from "@/lib/generateMachineReportPdf";
 import { db } from "@/lib/db";
 import { generateReferenceId } from "@/lib/referenceId";
@@ -319,24 +320,6 @@ export async function POST(request: Request) {
 
     const referenceId = generateReferenceId();
 
-    await db.machineIntake.create({
-      data: {
-        referenceId,
-        customerName,
-        email,
-        phone,
-        brand,
-        model,
-        machineType,
-        issueSummary,
-        maxRepairAmount,
-        addCleaningService,
-        acceptedTerms,
-        photoCount: photoFiles.length,
-        timeSpentMs: timeSpent,
-      },
-    });
-
     const pdfPhotos = await Promise.all(
       photoFiles.map(async (file, index) => ({
         name: file.name || `machine-photo-${index + 1}`,
@@ -361,6 +344,57 @@ export async function POST(request: Request) {
       photoCount: pdfPhotos.length,
       signatureDataUrl,
       photos: pdfPhotos,
+    });
+
+    const blobToken = process.env.CAFFEJR_BLOB_READ_WRITE_TOKEN;
+
+    const photoUrls = await Promise.all(
+      pdfPhotos.map(async (photo, index) => {
+        const ext = photo.mimeType.split("/")[1] ?? "jpg";
+        const { url } = await put(
+          `intakes/${referenceId}/photo-${index + 1}.${ext}`,
+          photo.bytes,
+          { access: "private", token: blobToken }
+        );
+        return url;
+      })
+    );
+
+    const pdfFilenameForBlob = `intakes/${referenceId}-${buildPdfFilename(customerName)}`;
+    const { url: pdfUrl } = await put(pdfFilenameForBlob, reportPdfBuffer, {
+      access: "private",
+      contentType: "application/pdf",
+      token: blobToken,
+    });
+
+    const newIntake = await db.machineIntake.create({
+      data: {
+        referenceId,
+        customerName,
+        email,
+        phone,
+        brand,
+        model,
+        machineType,
+        issueSummary,
+        maxRepairAmount,
+        addCleaningService,
+        acceptedTerms,
+        photoCount: photoFiles.length,
+        photoUrls,
+        signatureDataUrl,
+        timeSpentMs: timeSpent,
+        pdfUrl,
+      },
+    });
+
+    await db.intakeChangeLog.create({
+      data: {
+        intakeId: newIntake.id,
+        referenceId: newIntake.referenceId,
+        actorEmail: "system",
+        action: "created",
+      },
     });
 
     const pdfFilename = buildPdfFilename(customerName);

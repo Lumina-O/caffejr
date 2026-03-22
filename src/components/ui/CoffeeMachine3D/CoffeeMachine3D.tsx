@@ -2,7 +2,7 @@
 
 import { Component, ReactNode, useMemo } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Environment, OrbitControls, useGLTF } from "@react-three/drei";
+import { OrbitControls, useGLTF } from "@react-three/drei";
 
 type CoffeeMachine3DProps = {
   onError?: () => void;
@@ -96,8 +96,6 @@ function CoffeeMachineScene({
       <directionalLight position={[0, 6, 0]} intensity={0.7} />
 
       <CoffeeMachineModel mode={mode} />
-
-      <Environment preset="city" />
 
       <OrbitControls
         autoRotate

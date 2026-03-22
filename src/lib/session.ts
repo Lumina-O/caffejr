@@ -7,6 +7,7 @@ export type SessionData = {
   email: string;
   name: string;
   role: UserRole;
+  mustChangePassword?: boolean;
 };
 
 export const sessionOptions: SessionOptions = {

@@ -25,7 +25,8 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",                // unsafe-inline needed for Tailwind
       "img-src 'self' blob: data:",                      // blob/data needed for signature pad and photo previews
       "font-src 'self'",
-      "connect-src 'self'",
+      "connect-src 'self' blob:",   // blob: needed for Three.js ImageBitmapLoader (fetches blob URLs for embedded textures)
+      "frame-src 'self'",
       "frame-ancestors 'none'",
     ].join("; "),
   },

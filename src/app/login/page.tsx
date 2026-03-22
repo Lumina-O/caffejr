@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -87,20 +86,13 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <div className="mb-2 flex items-center justify-between">
+            <div className="mb-2">
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-neutral-800"
               >
                 Password
               </label>
-
-              <Link
-                href="/forgot-password"
-                className="text-sm text-neutral-500 transition hover:text-neutral-900"
-              >
-                Forgot password?
-              </Link>
             </div>
 
             <div className="relative">
@@ -151,15 +143,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-neutral-600">
-          Do not have an account?{" "}
-          <Link
-            href="/signup"
-            className="font-medium text-neutral-900 underline underline-offset-4"
-          >
-            Create one
-          </Link>
-        </div>
       </div>
     </main>
   );

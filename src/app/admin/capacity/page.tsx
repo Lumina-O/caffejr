@@ -1,17 +1,21 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, ExternalLink, X } from "lucide-react";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
 
-type TicketStatus = "pending" | "confirmed" | "in-progress" | "done";
+type IntakeStatus = "received" | "in_progress" | "completed" | "rejected";
 type CalendarView = "month" | "week";
 
-type Ticket = {
+type IntakeItem = {
   id: string;
+  referenceId: string;
   customerName: string;
-  title: string;
-  date: string;
-  time?: string;
-  status: TicketStatus;
+  machineType: string;
+  status: IntakeStatus;
+  startDate: string;
+  endDate: string;
 };
 
 type CalendarDay = {
@@ -19,496 +23,310 @@ type CalendarDay = {
   inCurrentMonth: boolean;
 };
 
-const MAX_TICKETS_PER_DAY = 5;
-
-const mockTickets: Ticket[] = [
-  {
-    id: "1",
-    customerName: "John Hansen",
-    title: "Coffee machine repair",
-    date: "2026-03-03",
-    time: "09:00",
-    status: "confirmed",
-  },
-  {
-    id: "2",
-    customerName: "Sarah Nielsen",
-    title: "Descaling service",
-    date: "2026-03-03",
-    time: "11:30",
-    status: "pending",
-  },
-  {
-    id: "3",
-    customerName: "Ali Ahmed",
-    title: "Water leak inspection",
-    date: "2026-03-07",
-    time: "10:00",
-    status: "in-progress",
-  },
-  {
-    id: "4",
-    customerName: "Emma Larsen",
-    title: "Pump replacement",
-    date: "2026-03-07",
-    time: "13:00",
-    status: "confirmed",
-  },
-  {
-    id: "5",
-    customerName: "Lucas Jensen",
-    title: "Steam wand issue",
-    date: "2026-03-07",
-    time: "15:00",
-    status: "confirmed",
-  },
-  {
-    id: "6",
-    customerName: "Mia Pedersen",
-    title: "General maintenance",
-    date: "2026-03-10",
-    time: "09:30",
-    status: "done",
-  },
-  {
-    id: "7",
-    customerName: "Noah Sørensen",
-    title: "Electrical issue",
-    date: "2026-03-10",
-    time: "12:00",
-    status: "confirmed",
-  },
-  {
-    id: "8",
-    customerName: "Ella Kristensen",
-    title: "Pressure problem",
-    date: "2026-03-10",
-    time: "14:00",
-    status: "pending",
-  },
-  {
-    id: "9",
-    customerName: "Leo Madsen",
-    title: "Group head service",
-    date: "2026-03-12",
-    time: "08:30",
-    status: "confirmed",
-  },
-  {
-    id: "10",
-    customerName: "Anna Holm",
-    title: "Cleaning and inspection",
-    date: "2026-03-12",
-    time: "10:00",
-    status: "confirmed",
-  },
-  {
-    id: "11",
-    customerName: "Mark Olsen",
-    title: "No power issue",
-    date: "2026-03-12",
-    time: "11:30",
-    status: "confirmed",
-  },
-  {
-    id: "12",
-    customerName: "Julie Thomsen",
-    title: "Boiler issue",
-    date: "2026-03-12",
-    time: "13:00",
-    status: "pending",
-  },
-  {
-    id: "13",
-    customerName: "David Berg",
-    title: "Full service",
-    date: "2026-03-12",
-    time: "15:00",
-    status: "confirmed",
-  },
-];
-
-const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const MAX_ITEMS_PER_DAY = 5;
+const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const ALL_STATUSES: IntakeStatus[] = ["received", "in_progress", "completed", "rejected"];
 
 function formatDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, "0");
-  const day = `${date.getDate()}`.padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  const y = date.getFullYear();
+  const m = `${date.getMonth() + 1}`.padStart(2, "0");
+  const d = `${date.getDate()}`.padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
-function parseDateFromKey(dateString: string) {
-  return new Date(`${dateString}T00:00:00`);
+function formatMonthParam(date: Date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function parseDateKey(s: string) {
+  return new Date(`${s}T00:00:00`);
 }
 
 function formatMonthTitle(date: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    month: "long",
-    year: "numeric",
-  }).format(date);
+  return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(date);
 }
 
 function formatWeekTitle(start: Date, end: Date) {
-  const startLabel = new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-  }).format(start);
-
-  const endLabel = new Intl.DateTimeFormat("en-GB", {
+  const s = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short" }).format(start);
+  const e = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: start.getMonth() === end.getMonth() ? undefined : "short",
-    year: start.getFullYear() === end.getFullYear() ? undefined : "numeric",
   }).format(end);
-
-  const yearLabel = new Intl.DateTimeFormat("en-GB", {
-    year: "numeric",
-  }).format(end);
-
-  return `${startLabel} - ${endLabel} ${yearLabel}`;
+  const year = new Intl.DateTimeFormat("en-GB", { year: "numeric" }).format(end);
+  return `${s} – ${e} ${year}`;
 }
 
-function formatFullDate(dateString: string) {
-  const date = parseDateFromKey(dateString);
+function formatFullDate(s: string) {
   return new Intl.DateTimeFormat("en-GB", {
     weekday: "long",
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(date);
+  }).format(parseDateKey(s));
 }
 
 function getShortWeekday(date: Date) {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-  }).format(date);
-}
-
-function getStatusFromCount(count: number, max: number) {
-  if (count === 0) return "empty";
-  if (count >= max) return "full";
-  if (count >= Math.ceil(max * 0.7)) return "busy";
-  return "available";
-}
-
-function getDayStyles(status: string, isSelected: boolean) {
-  const baseSelected = isSelected
-    ? "ring-2 ring-[#b19359] border-[#b19359] shadow-sm"
-    : "border-neutral-200";
-
-  switch (status) {
-    case "full":
-      return `${baseSelected} bg-red-50/80 hover:bg-red-50`;
-    case "busy":
-      return `${baseSelected} bg-yellow-50/80 hover:bg-yellow-50`;
-    case "available":
-      return `${baseSelected} bg-green-50/80 hover:bg-green-50`;
-    default:
-      return `${baseSelected} bg-white hover:bg-neutral-50`;
-  }
-}
-
-function getCountBadgeStyles(status: string, inCurrentMonth: boolean) {
-  if (!inCurrentMonth) {
-    return "bg-neutral-300 text-white";
-  }
-
-  switch (status) {
-    case "full":
-    case "busy":
-    case "available":
-      return "bg-neutral-900 text-white";
-    default:
-      return "bg-neutral-200 text-neutral-700";
-  }
-}
-
-function getStatusDot(status: string) {
-  switch (status) {
-    case "full":
-      return "bg-red-500";
-    case "busy":
-      return "bg-yellow-500";
-    case "available":
-      return "bg-green-500";
-    default:
-      return "bg-neutral-300";
-  }
-}
-
-function getProgressBarColor(status: string) {
-  switch (status) {
-    case "full":
-      return "bg-red-500";
-    case "busy":
-      return "bg-yellow-500";
-    case "available":
-      return "bg-green-500";
-    default:
-      return "bg-neutral-300";
-  }
-}
-
-function getBadgeStyles(status: TicketStatus) {
-  switch (status) {
-    case "done":
-      return "bg-neutral-100 text-neutral-700";
-    case "in-progress":
-      return "bg-blue-100 text-blue-700";
-    case "confirmed":
-      return "bg-green-100 text-green-700";
-    case "pending":
-    default:
-      return "bg-yellow-100 text-yellow-700";
-  }
-}
-
-function getCalendarDays(currentMonth: Date) {
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-
-  const firstDayOfMonth = new Date(year, month, 1);
-  const lastDayOfMonth = new Date(year, month + 1, 0);
-
-  const mondayBasedStart = (firstDayOfMonth.getDay() + 6) % 7;
-  const totalDays = lastDayOfMonth.getDate();
-
-  const days: CalendarDay[] = [];
-
-  for (let i = mondayBasedStart; i > 0; i--) {
-    days.push({
-      date: new Date(year, month, 1 - i),
-      inCurrentMonth: false,
-    });
-  }
-
-  for (let day = 1; day <= totalDays; day++) {
-    days.push({
-      date: new Date(year, month, day),
-      inCurrentMonth: true,
-    });
-  }
-
-  while (days.length % 7 !== 0) {
-    const nextDay = days.length - (mondayBasedStart + totalDays) + 1;
-    days.push({
-      date: new Date(year, month + 1, nextDay),
-      inCurrentMonth: false,
-    });
-  }
-
-  return days;
+  return new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(date);
 }
 
 function getStartOfWeek(date: Date) {
   const clone = new Date(date);
-  const day = (clone.getDay() + 6) % 7;
-  clone.setDate(clone.getDate() - day);
+  clone.setDate(clone.getDate() - ((clone.getDay() + 6) % 7));
   clone.setHours(0, 0, 0, 0);
   return clone;
 }
 
-function getWeekDays(anchorDate: Date) {
-  const start = getStartOfWeek(anchorDate);
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(start);
-    date.setDate(start.getDate() + index);
-    return {
-      date,
-      inCurrentMonth: true,
-    };
-  });
-}
-
-function addDays(date: Date, days: number) {
-  const clone = new Date(date);
-  clone.setDate(clone.getDate() + days);
-  return clone;
+function addDays(date: Date, n: number) {
+  const d = new Date(date);
+  d.setDate(d.getDate() + n);
+  return d;
 }
 
 function isSameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
-function getMonthTotals(currentMonth: Date, ticketsByDate: Record<string, Ticket[]>) {
-  const currentYear = currentMonth.getFullYear();
-  const currentMonthIndex = currentMonth.getMonth();
-
-  let emptyDays = 0;
-  let daysWithTickets = 0;
-  let fullDays = 0;
-
-  const lastDay = new Date(currentYear, currentMonthIndex + 1, 0).getDate();
-
-  for (let day = 1; day <= lastDay; day++) {
-    const dateKey = formatDateKey(new Date(currentYear, currentMonthIndex, day));
-    const count = ticketsByDate[dateKey]?.length ?? 0;
-
-    if (count === 0) emptyDays++;
-    if (count > 0) daysWithTickets++;
-    if (count >= MAX_TICKETS_PER_DAY) fullDays++;
+function getCalendarDays(month: Date): CalendarDay[] {
+  const y = month.getFullYear();
+  const m = month.getMonth();
+  const firstDay = new Date(y, m, 1);
+  const lastDay = new Date(y, m + 1, 0);
+  const offset = (firstDay.getDay() + 6) % 7;
+  const days: CalendarDay[] = [];
+  for (let i = offset; i > 0; i--) days.push({ date: new Date(y, m, 1 - i), inCurrentMonth: false });
+  for (let d = 1; d <= lastDay.getDate(); d++) days.push({ date: new Date(y, m, d), inCurrentMonth: true });
+  while (days.length % 7 !== 0) {
+    days.push({ date: new Date(y, m + 1, days.length - (offset + lastDay.getDate()) + 1), inCurrentMonth: false });
   }
-
-  return { emptyDays, daysWithTickets, fullDays };
+  return days;
 }
 
-function getWeekTotals(anchorDate: Date, ticketsByDate: Record<string, Ticket[]>) {
-  const weekDays = getWeekDays(anchorDate);
+function getWeekDays(anchor: Date): CalendarDay[] {
+  const start = getStartOfWeek(anchor);
+  return Array.from({ length: 7 }, (_, i) => ({ date: addDays(start, i), inCurrentMonth: true }));
+}
 
-  let emptyDays = 0;
-  let daysWithTickets = 0;
-  let fullDays = 0;
-
-  for (const day of weekDays) {
-    const dateKey = formatDateKey(day.date);
-    const count = ticketsByDate[dateKey]?.length ?? 0;
-
-    if (count === 0) emptyDays++;
-    if (count > 0) daysWithTickets++;
-    if (count >= MAX_TICKETS_PER_DAY) fullDays++;
+function buildItemsByDate(intakes: IntakeItem[]): Record<string, IntakeItem[]> {
+  const result: Record<string, IntakeItem[]> = {};
+  for (const intake of intakes) {
+    const start = parseDateKey(intake.startDate);
+    const end = parseDateKey(intake.endDate);
+    const cur = new Date(start);
+    while (cur <= end) {
+      const key = formatDateKey(cur);
+      if (!result[key]) result[key] = [];
+      result[key].push(intake);
+      cur.setDate(cur.getDate() + 1);
+    }
   }
+  return result;
+}
 
-  return { emptyDays, daysWithTickets, fullDays };
+function capacityStatus(count: number) {
+  if (count === 0) return "empty";
+  if (count >= MAX_ITEMS_PER_DAY) return "full";
+  if (count >= Math.ceil(MAX_ITEMS_PER_DAY * 0.7)) return "busy";
+  return "available";
+}
+
+function dayCardClass(status: string, selected: boolean) {
+  const ring = selected ? "ring-2 ring-[#b19359] border-[#b19359] shadow-sm" : "border-neutral-200";
+  switch (status) {
+    case "full":      return `${ring} bg-red-50/80 hover:bg-red-50`;
+    case "busy":      return `${ring} bg-yellow-50/80 hover:bg-yellow-50`;
+    case "available": return `${ring} bg-green-50/80 hover:bg-green-50`;
+    default:          return `${ring} bg-white hover:bg-neutral-50`;
+  }
+}
+
+function progressColor(status: string) {
+  switch (status) {
+    case "full":      return "bg-red-500";
+    case "busy":      return "bg-yellow-500";
+    case "available": return "bg-green-500";
+    default:          return "bg-neutral-300";
+  }
+}
+
+function statusDot(status: string) {
+  switch (status) {
+    case "full":      return "bg-red-500";
+    case "busy":      return "bg-yellow-500";
+    case "available": return "bg-green-500";
+    default:          return "bg-neutral-300";
+  }
+}
+
+function intakeBadgeVariant(status: IntakeStatus) {
+  switch (status) {
+    case "completed":  return "secondary" as const;
+    case "in_progress": return "blue" as const;
+    case "received":   return "warning" as const;
+    case "rejected":   return "destructive" as const;
+  }
 }
 
 export default function CapacityCalendarPage() {
   const [viewMode, setViewMode] = useState<CalendarView>("month");
-  const [currentMonth, setCurrentMonth] = useState(new Date(2026, 2, 1));
-  const [selectedDate, setSelectedDate] = useState("2026-03-12");
+  const [currentMonth, setCurrentMonth] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
-  const ticketsByDate = useMemo(() => {
-    return mockTickets.reduce<Record<string, Ticket[]>>((acc, ticket) => {
-      if (!acc[ticket.date]) {
-        acc[ticket.date] = [];
-      }
-      acc[ticket.date].push(ticket);
-      return acc;
-    }, {});
+  const [intakes, setIntakes] = useState<IntakeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<IntakeStatus | "all">("all");
+  const [machineTypeFilter, setMachineTypeFilter] = useState("all");
+
+  async function fetchData(month: Date) {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/tickets?month=${formatMonthParam(month)}`);
+      const data = await res.json();
+      setIntakes(data.intakes ?? []);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { fetchData(currentMonth); }, [currentMonth]);
+
+  // Close modal on Escape
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setModalOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const selectedDateObj = useMemo(() => parseDateFromKey(selectedDate), [selectedDate]);
+  async function handleStatusUpdate(id: string, newStatus: IntakeStatus) {
+    setUpdatingId(id);
+    try {
+      const res = await fetch(`/api/admin/intakes/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) {
+        setIntakes((prev) => prev.map((i) => (i.id === id ? { ...i, status: newStatus } : i)));
+      }
+    } finally {
+      setUpdatingId(null);
+    }
+  }
 
+  const machineTypes = useMemo(
+    () => Array.from(new Set(intakes.map((i) => i.machineType).filter(Boolean))).sort(),
+    [intakes]
+  );
+
+  const filtered = useMemo(
+    () =>
+      intakes.filter((i) => {
+        if (statusFilter !== "all" && i.status !== statusFilter) return false;
+        if (machineTypeFilter !== "all" && i.machineType !== machineTypeFilter) return false;
+        return true;
+      }),
+    [intakes, statusFilter, machineTypeFilter]
+  );
+
+  const itemsByDate = useMemo(() => buildItemsByDate(filtered), [filtered]);
+
+  const anchorDate = useMemo(
+    () => selectedDate ? parseDateKey(selectedDate) : new Date(),
+    [selectedDate]
+  );
   const monthDays = useMemo(() => getCalendarDays(currentMonth), [currentMonth]);
-  const weekDays = useMemo(() => getWeekDays(selectedDateObj), [selectedDateObj]);
-
+  const weekDays = useMemo(() => getWeekDays(anchorDate), [anchorDate]);
   const visibleDays = viewMode === "month" ? monthDays : weekDays;
 
-  const selectedTickets = ticketsByDate[selectedDate] ?? [];
-  const selectedCount = selectedTickets.length;
-  const selectedRemaining = Math.max(MAX_TICKETS_PER_DAY - selectedCount, 0);
-
-  const totals = useMemo(() => {
-    return viewMode === "month"
-      ? getMonthTotals(currentMonth, ticketsByDate)
-      : getWeekTotals(selectedDateObj, ticketsByDate);
-  }, [viewMode, currentMonth, selectedDateObj, ticketsByDate]);
-
-  const weekStart = useMemo(() => getStartOfWeek(selectedDateObj), [selectedDateObj]);
+  const selectedItems = selectedDate ? (itemsByDate[selectedDate] ?? []) : [];
+  const weekStart = useMemo(() => getStartOfWeek(anchorDate), [anchorDate]);
   const weekEnd = useMemo(() => addDays(weekStart, 6), [weekStart]);
 
-  function goToPrevious() {
-    if (viewMode === "month") {
-      setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-      return;
-    }
+  // Month/week totals
+  const totals = useMemo(() => {
+    const days = viewMode === "month"
+      ? Array.from({ length: new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate() },
+          (_, i) => formatDateKey(new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i + 1)))
+      : weekDays.map((d) => formatDateKey(d.date));
 
-    const nextSelected = addDays(selectedDateObj, -7);
-    setSelectedDate(formatDateKey(nextSelected));
-    if (!isSameMonth(nextSelected, currentMonth)) {
-      setCurrentMonth(new Date(nextSelected.getFullYear(), nextSelected.getMonth(), 1));
+    let empty = 0, active = 0, full = 0;
+    for (const key of days) {
+      const c = itemsByDate[key]?.length ?? 0;
+      if (c === 0) empty++;
+      if (c > 0) active++;
+      if (c >= MAX_ITEMS_PER_DAY) full++;
+    }
+    return { empty, active, full };
+  }, [viewMode, currentMonth, weekDays, itemsByDate]);
+
+  function navigate(dir: 1 | -1) {
+    if (viewMode === "month") {
+      setCurrentMonth((p) => new Date(p.getFullYear(), p.getMonth() + dir, 1));
+    } else {
+      const next = addDays(anchorDate, dir * 7);
+      setSelectedDate(formatDateKey(next));
+      if (!isSameMonth(next, currentMonth)) {
+        setCurrentMonth(new Date(next.getFullYear(), next.getMonth(), 1));
+      }
     }
   }
 
-  function goToNext() {
-    if (viewMode === "month") {
-      setCurrentMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
-      return;
-    }
-
-    const nextSelected = addDays(selectedDateObj, 7);
-    setSelectedDate(formatDateKey(nextSelected));
-    if (!isSameMonth(nextSelected, currentMonth)) {
-      setCurrentMonth(new Date(nextSelected.getFullYear(), nextSelected.getMonth(), 1));
-    }
-  }
-
-  function renderDayCard(
-    day: CalendarDay,
-    options?: {
-      compact?: boolean;
-      showWeekdayInside?: boolean;
-    }
-  ) {
-    const compact = options?.compact ?? false;
-    const showWeekdayInside = options?.showWeekdayInside ?? false;
-
-    const dateKey = formatDateKey(day.date);
-    const tickets = ticketsByDate[dateKey] ?? [];
-    const count = tickets.length;
-    const remaining = Math.max(MAX_TICKETS_PER_DAY - count, 0);
-    const status = getStatusFromCount(count, MAX_TICKETS_PER_DAY);
-    const isSelected = selectedDate === dateKey;
+  function renderDayCard(day: CalendarDay, compact = false, showWeekday = false) {
+    const key = formatDateKey(day.date);
+    const items = itemsByDate[key] ?? [];
+    const count = items.length;
+    const remaining = Math.max(MAX_ITEMS_PER_DAY - count, 0);
+    const status = capacityStatus(count);
+    const isSelected = selectedDate === key && modalOpen;
 
     return (
       <button
-        key={dateKey}
+        key={key}
         type="button"
-        onClick={() => setSelectedDate(dateKey)}
-        className={`rounded-2xl border p-3 text-left transition ${
-          compact ? "h-[132px] w-full" : "h-[136px] sm:h-[152px]"
-        } ${getDayStyles(status, isSelected)} ${!day.inCurrentMonth ? "opacity-40" : ""}`}
+        onClick={() => {
+          setSelectedDate(key);
+          setModalOpen(true);
+        }}
+        className={`rounded-2xl border p-3 text-left transition ${compact ? "h-[132px] w-full" : "h-[136px] sm:h-[152px]"} ${dayCardClass(status, isSelected)} ${!day.inCurrentMonth ? "opacity-40" : ""}`}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-start justify-between gap-2">
             <div>
-              {showWeekdayInside ? (
+              {showWeekday && (
                 <div className="text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
                   {getShortWeekday(day.date)}
                 </div>
-              ) : null}
-
-              <span
-                className={`text-sm font-semibold ${
-                  day.inCurrentMonth ? "text-neutral-900" : "text-neutral-500"
-                }`}
-              >
+              )}
+              <span className={`text-sm font-semibold ${day.inCurrentMonth ? "text-neutral-900" : "text-neutral-500"}`}>
                 {day.date.getDate()}
               </span>
             </div>
-
-            <span
-              className={`inline-flex min-w-8 items-center justify-center rounded-full px-2 py-1 text-xs font-semibold ${getCountBadgeStyles(
-                status,
-                day.inCurrentMonth
-              )}`}
-            >
+            <span className={`inline-flex min-w-8 items-center justify-center rounded-full px-2 py-1 text-xs font-semibold ${count > 0 ? "bg-neutral-900 text-white" : "bg-neutral-200 text-neutral-700"}`}>
               {count}
             </span>
           </div>
 
           <div className="mt-3 flex justify-center">
-            {count === 0 ? (
-              <span className="text-xs text-neutral-400">No items</span>
-            ) : (
-              <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700">
-                {count} {count === 1 ? "item" : "items"}
-              </span>
-            )}
+            {count === 0
+              ? <span className="text-xs text-neutral-400">No intakes</span>
+              : <span className="rounded-full bg-neutral-100 px-2.5 py-1 text-xs font-medium text-neutral-700">{count} {count === 1 ? "intake" : "intakes"}</span>
+            }
           </div>
 
           <div className="mt-auto pt-3">
             <div className="flex items-center gap-2">
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-neutral-200">
-                <div
-                  className={`h-full rounded-full ${getProgressBarColor(status)}`}
-                  style={{
-                    width: `${Math.min((count / MAX_TICKETS_PER_DAY) * 100, 100)}%`,
-                  }}
-                />
+                <div className={`h-full rounded-full ${progressColor(status)}`} style={{ width: `${Math.min((count / MAX_ITEMS_PER_DAY) * 100, 100)}%` }} />
               </div>
-
-              <span className={`h-3 w-3 rounded-full ${getStatusDot(status)}`} />
+              <span className={`h-3 w-3 rounded-full ${statusDot(status)}`} />
             </div>
-
             <div className="mt-2 text-xs text-neutral-500">{remaining} left</div>
           </div>
         </div>
@@ -517,253 +335,232 @@ export default function CapacityCalendarPage() {
   }
 
   return (
-    <main className="mx-auto max-w-[1700px] px-4 py-6 sm:px-6 lg:px-8">
+    <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      {/* Header */}
       <div className="mb-6 flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-neutral-900 sm:text-4xl">
-            Ticket Capacity Calendar
-          </h1>
-          <p className="mt-2 text-sm text-neutral-600 sm:text-base">
-            See how filled each day is, spot empty days fast, and click a date to review all tickets.
+          <p className="text-sm font-medium text-neutral-500">Admin</p>
+          <h1 className="mt-1 text-3xl font-semibold tracking-tight text-neutral-900">Capacity</h1>
+          <p className="mt-2 text-sm text-neutral-600">
+            Track active machine intakes across the calendar. Click any day to see details.
           </p>
         </div>
 
         <div className="grid grid-cols-3 gap-3 sm:w-fit">
-          <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
-            <div className="text-sm text-neutral-500">Days with tickets</div>
-            <div className="mt-1 text-2xl font-semibold text-neutral-900">
-              {totals.daysWithTickets}
+          {[
+            { label: "Days with intakes", value: totals.active },
+            { label: "Empty days", value: totals.empty },
+            { label: "Full days", value: totals.full },
+          ].map(({ label, value }) => (
+            <div key={label} className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
+              <div className="text-xs text-neutral-500">{label}</div>
+              <div className="mt-1 text-2xl font-semibold text-neutral-900">{value}</div>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
-            <div className="text-sm text-neutral-500">Empty days</div>
-            <div className="mt-1 text-2xl font-semibold text-neutral-900">
-              {totals.emptyDays}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-neutral-200 bg-white px-4 py-3 shadow-sm">
-            <div className="text-sm text-neutral-500">Full days</div>
-            <div className="mt-1 text-2xl font-semibold text-neutral-900">
-              {totals.fullDays}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[2.3fr_0.7fr]">
-        <section className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
-          <div className="mb-4 flex flex-col gap-3">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <h2 className="text-3xl font-semibold text-neutral-900">
-                {viewMode === "month"
-                  ? formatMonthTitle(currentMonth)
-                  : formatWeekTitle(weekStart, weekEnd)}
-              </h2>
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap gap-3">
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-neutral-600">Status</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as IntakeStatus | "all")}
+            className="rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500"
+          >
+            <option value="all">All statuses</option>
+            {ALL_STATUSES.map((s) => (
+              <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ")}</option>
+            ))}
+          </select>
+        </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex rounded-full border border-neutral-300 bg-neutral-50 p-1">
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("month")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                      viewMode === "month"
-                        ? "bg-neutral-900 text-white"
-                        : "text-neutral-700 hover:bg-white"
-                    }`}
-                  >
-                    Month
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setViewMode("week")}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                      viewMode === "week"
-                        ? "bg-neutral-900 text-white"
-                        : "text-neutral-700 hover:bg-white"
-                    }`}
-                  >
-                    Week
-                  </button>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={goToPrevious}
-                  className="rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-                >
-                  Previous
-                </button>
-
-                <button
-                  type="button"
-                  onClick={goToNext}
-                  className="rounded-full border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+        {machineTypes.length > 0 && (
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-neutral-600">Machine type</label>
+            <select
+              value={machineTypeFilter}
+              onChange={(e) => setMachineTypeFilter(e.target.value)}
+              className="rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500"
+            >
+              <option value="all">All types</option>
+              {machineTypes.map((m) => <option key={m} value={m}>{m}</option>)}
+            </select>
           </div>
+        )}
 
-          {viewMode === "month" ? (
-            <>
-              <div className="mb-3 hidden sm:grid sm:grid-cols-7 sm:gap-3">
-                {weekdayLabels.map((label) => (
-                  <div
-                    key={label}
-                    className="px-1 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500 sm:text-sm"
-                  >
-                    {label}
-                  </div>
-                ))}
-              </div>
+        {loading && <span className="flex items-center text-sm text-neutral-400">Loading…</span>}
+      </div>
 
-              <div className="hidden sm:grid sm:grid-cols-7 sm:gap-3">
-                {visibleDays.map((day) => renderDayCard(day))}
-              </div>
+      {/* Calendar — full width */}
+      <section className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-6">
+        <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <h2 className="text-3xl font-semibold text-neutral-900">
+            {viewMode === "month" ? formatMonthTitle(currentMonth) : formatWeekTitle(weekStart, weekEnd)}
+          </h2>
 
-              <div className="sm:hidden">
-  <div className="space-y-3">
-    {weekDays.map((day) =>
-      renderDayCard(day, {
-        compact: true,
-        showWeekdayInside: true,
-      })
-    )}
-  </div>
-</div>
-            </>
-          ) : (
-            <>
-              <div className="hidden sm:grid sm:grid-cols-7 sm:gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex rounded-full border border-neutral-300 bg-neutral-50 p-1">
+              {(["month", "week"] as CalendarView[]).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => setViewMode(v)}
+                  className={`rounded-full px-4 py-2 text-sm font-medium transition ${viewMode === v ? "bg-neutral-900 text-white" : "text-neutral-700 hover:bg-white"}`}
+                >
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
+            </div>
+            <button type="button" onClick={() => navigate(-1)} className="rounded-full border border-neutral-300 p-2.5 text-neutral-700 transition hover:bg-neutral-50">
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button type="button" onClick={() => navigate(1)} className="rounded-full border border-neutral-300 p-2.5 text-neutral-700 transition hover:bg-neutral-50">
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {viewMode === "month" ? (
+          <>
+            <div className="mb-3 hidden sm:grid sm:grid-cols-7 sm:gap-3">
+              {WEEKDAY_LABELS.map((l) => (
+                <div key={l} className="px-1 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500">{l}</div>
+              ))}
+            </div>
+            <div className="hidden sm:grid sm:grid-cols-7 sm:gap-3">
+              {visibleDays.map((day) => renderDayCard(day))}
+            </div>
+            <div className="space-y-3 sm:hidden">
+              {weekDays.map((day) => renderDayCard(day, true, true))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="hidden sm:grid sm:grid-cols-7 sm:gap-3">
+              {weekDays.map((day) => (
+                <div key={`lbl-${formatDateKey(day.date)}`} className="px-1 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  {getShortWeekday(day.date)}
+                </div>
+              ))}
+            </div>
+            <div className="hidden sm:grid sm:grid-cols-7 sm:gap-3">
+              {weekDays.map((day) => renderDayCard(day))}
+            </div>
+            <div className="sm:hidden">
+              <div className="mb-3 flex">
                 {weekDays.map((day) => (
-                  <div
-                    key={`label-${formatDateKey(day.date)}`}
-                    className="px-1 py-2 text-center text-xs font-semibold uppercase tracking-wide text-neutral-500 sm:text-sm"
-                  >
+                  <div key={`mlbl-${formatDateKey(day.date)}`} className="flex-1 text-center text-[11px] font-semibold uppercase tracking-wide text-neutral-500">
                     {getShortWeekday(day.date)}
                   </div>
                 ))}
               </div>
-
-              <div className="hidden sm:grid sm:grid-cols-7 sm:gap-3">
-                {weekDays.map((day) => renderDayCard(day))}
+              <div className="flex gap-3 overflow-x-auto pb-2">
+                {weekDays.map((day) => renderDayCard(day, true, false))}
               </div>
+            </div>
+          </>
+        )}
 
-              <div className="sm:hidden">
-                <div className="mb-3 flex items-center justify-between">
-                  {weekDays.map((day) => (
-                    <div
-                      key={`mobile-label-${formatDateKey(day.date)}`}
-                      className="flex-1 px-1 text-center text-[11px] font-semibold uppercase tracking-wide text-neutral-500"
-                    >
-                      {getShortWeekday(day.date)}
+        <div className="mt-5 flex flex-wrap gap-4 text-sm text-neutral-500">
+          {[
+            { dot: "border border-neutral-300 bg-white", label: "Empty" },
+            { dot: "bg-green-500", label: "Available" },
+            { dot: "bg-yellow-500", label: "Almost full" },
+            { dot: "bg-red-500", label: "Full" },
+          ].map(({ dot, label }) => (
+            <div key={label} className="flex items-center gap-2">
+              <span className={`h-3 w-3 rounded-full ${dot}`} />
+              {label}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Day detail modal */}
+      {modalOpen && selectedDate && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
+        >
+          <div
+            ref={modalRef}
+            className="flex w-full max-w-md flex-col rounded-3xl bg-white shadow-2xl"
+            style={{ maxHeight: "85vh" }}
+          >
+            {/* Modal header */}
+            <div className="flex items-start justify-between border-b border-neutral-100 px-6 py-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-neutral-400">
+                  {selectedItems.length} {selectedItems.length === 1 ? "intake" : "intakes"} ·{" "}
+                  {Math.max(MAX_ITEMS_PER_DAY - selectedItems.length, 0)} remaining
+                </p>
+                <h2 className="mt-1 text-xl font-semibold text-neutral-900">
+                  {formatFullDate(selectedDate)}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalOpen(false)}
+                className="ml-4 rounded-xl p-2 text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-900"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="overflow-y-auto px-6 py-5">
+              {selectedItems.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-8 text-center text-sm text-neutral-500">
+                  No intakes for this day.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {selectedItems.map((item) => (
+                    <div key={item.id} className="rounded-2xl border border-neutral-200 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-neutral-900">{item.customerName}</p>
+                          <p className="mt-0.5 text-xs text-neutral-400">{item.referenceId}</p>
+                          <p className="mt-1 text-xs text-neutral-500">{item.machineType}</p>
+                        </div>
+                        <Badge variant={intakeBadgeVariant(item.status)}>
+                          {item.status.replace("_", " ")}
+                        </Badge>
+                      </div>
+
+                      {item.startDate !== item.endDate && (
+                        <p className="mt-2 text-xs text-neutral-400">Since {item.startDate}</p>
+                      )}
+
+                      <div className="mt-3 flex items-center gap-2">
+                        <select
+                          value={item.status}
+                          disabled={updatingId === item.id}
+                          onChange={(e) => handleStatusUpdate(item.id, e.target.value as IntakeStatus)}
+                          className="flex-1 rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-500 disabled:opacity-50"
+                        >
+                          {ALL_STATUSES.map((s) => (
+                            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1).replace("_", " ")}</option>
+                          ))}
+                        </select>
+                        <Link
+                          href={`/admin/reports/${item.id}`}
+                          className="rounded-xl border border-neutral-300 p-2 text-neutral-500 transition hover:bg-neutral-50 hover:text-neutral-900"
+                          title="Open report"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </div>
                   ))}
                 </div>
-
-                <div className="flex gap-3 overflow-x-auto pb-2">
-                  {weekDays.map((day) =>
-                    renderDayCard(day, {
-                      compact: true,
-                      showWeekdayInside: false,
-                    })
-                  )}
-                </div>
-              </div>
-            </>
-          )}
-
-          <div className="mt-5 flex flex-wrap gap-4 text-sm text-neutral-600">
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full border border-neutral-300 bg-white" />
-              Empty
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-green-500" />
-              Available
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-yellow-500" />
-              Almost full
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-3 w-3 rounded-full bg-red-500" />
-              Full
+              )}
             </div>
           </div>
-        </section>
-
-        <aside className="rounded-3xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-5">
-          <h2 className="text-2xl font-semibold text-neutral-900">
-            {formatFullDate(selectedDate)}
-          </h2>
-
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-neutral-50 p-3.5">
-              <div className="text-sm text-neutral-500">Tickets</div>
-              <div className="mt-1 text-2xl font-semibold text-neutral-900">
-                {selectedCount}
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-neutral-50 p-3.5">
-              <div className="text-sm text-neutral-500">Remaining spots</div>
-              <div className="mt-1 text-2xl font-semibold text-neutral-900">
-                {selectedRemaining}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-7">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">
-              Tickets for this day
-            </h3>
-
-            {selectedTickets.length === 0 ? (
-              <div className="mt-4 rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 p-5 text-sm text-neutral-600">
-                No tickets booked for this day.
-              </div>
-            ) : (
-              <div className="mt-4 space-y-3">
-                {selectedTickets.map((ticket) => (
-                  <div
-                    key={ticket.id}
-                    className="rounded-2xl border border-neutral-200 p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-semibold text-neutral-900">
-                          {ticket.customerName}
-                        </p>
-                        <p className="mt-1 text-sm text-neutral-600">
-                          {ticket.title}
-                        </p>
-                      </div>
-
-                      <span
-                        className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${getBadgeStyles(
-                          ticket.status
-                        )}`}
-                      >
-                        {ticket.status}
-                      </span>
-                    </div>
-
-                    <div className="mt-3 text-sm text-neutral-500">
-                      {ticket.time ? `Time: ${ticket.time}` : "Time not set"}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </aside>
-      </div>
-
-      {/* TODO: Replace mockTickets with real ticket data from your backend or CMS, add filters for technician/status/location, and connect each ticket card to its detailed ticket page. */}
+        </div>
+      )}
     </main>
   );
 }

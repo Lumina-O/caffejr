@@ -131,10 +131,12 @@ export async function POST(request: NextRequest) {
     session.email = user.email;
     session.name = user.name;
     session.role = user.role as UserRole;
+    session.mustChangePassword = user.mustChangePassword;
 
     await session.save();
 
-    return NextResponse.json({ success: true, redirectTo: "/admin" });
+    const redirectTo = user.mustChangePassword ? "/change-password" : "/admin";
+    return NextResponse.json({ success: true, redirectTo });
   } catch (error) {
     console.error("Login error:", error);
 

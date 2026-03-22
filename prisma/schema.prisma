@@ -60,8 +60,14 @@ model MachineIntake {
   addCleaningService Boolean
   acceptedTerms     Boolean
   photoCount        Int          @default(0)
+  photoUrls         String[]
+  signatureDataUrl  String?
   timeSpentMs       Int          @default(0)
+  pdfUrl            String?
+  price             Int?
+  engineerNotes     String?
   status            IntakeStatus @default(received)
+  closedAt          DateTime?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
 }
@@ -72,9 +78,33 @@ model User {
   name           String
   passwordHash   String
   role           UserRole  @default(user)
-  isActive       Boolean   @default(true)
-  loginAttempts  Int       @default(0)
-  lockedUntil    DateTime?
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  loginAttempts      Int       @default(0)
+  lockedUntil        DateTime?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorId     String
+  actorEmail  String
+  targetId    String
+  targetEmail String
+  action      String
+  detail      String
+  createdAt   DateTime @default(now())
+}
+
+model IntakeChangeLog {
+  id            String   @id @default(uuid())
+  intakeId      String
+  referenceId   String   @default("")
+  actorEmail    String   @default("system")
+  action        String   @default("updated")
+  field         String?
+  oldValue      String?
+  newValue      String?
+  createdAt     DateTime @default(now())
 }
