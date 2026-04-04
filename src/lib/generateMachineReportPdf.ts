@@ -264,7 +264,20 @@ export async function generateMachineIntakePdf(
   y -= 8;
 
   drawSectionTitle("Issue Details");
-  drawParagraph("Issue summary", safe(data.issueSummary));
+
+  const rawIssueSummary = safe(data.issueSummary);
+  const issueParts = rawIssueSummary.match(
+    /^Kategori: (.+?)(?:\n\nEkstra detaljer:\n([\s\S]*))?$/,
+  );
+
+  if (issueParts) {
+    drawParagraph("Kategori", issueParts[1]);
+    if (issueParts[2]?.trim()) {
+      drawParagraph("Ekstra detaljer", issueParts[2].trim());
+    }
+  } else {
+    drawParagraph("Issue summary", rawIssueSummary);
+  }
 
   drawSectionTitle("Service Preferences");
   drawRow("Max amount before contact", `${safe(data.maxRepairAmount)} kr`);

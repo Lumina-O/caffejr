@@ -22,7 +22,7 @@ type MachineIntakeFormData = {
   model: string;
   machineType: string;
 
-  issueCategory: string;
+  issueCategories: string[];
   issueSummary: string;
 
   maxRepairAmount: string;
@@ -42,7 +42,7 @@ const initialFormData: MachineIntakeFormData = {
   model: "",
   machineType: "",
 
-  issueCategory: "",
+  issueCategories: [],
   issueSummary: "",
 
   maxRepairAmount: "1500",
@@ -285,12 +285,12 @@ export default function MachineIntakeFormPage() {
     }
 
     if (step === 2) {
-      if (!formData.issueCategory.trim()) {
-        return "Please choose or write an issue category.";
+      if (formData.issueCategories.length === 0) {
+        return "Please select at least one issue category.";
       }
 
       if (
-        formData.issueCategory.trim().toLowerCase() === "andet" &&
+        formData.issueCategories.includes("Andet") &&
         !formData.issueSummary.trim()
       ) {
         return "Please describe the problem when selecting 'Andet'.";
@@ -410,11 +410,13 @@ export default function MachineIntakeFormPage() {
     try {
       const body = new FormData();
 
+      const categoriesText = formData.issueCategories.join(", ");
       const combinedIssueSummary = formData.issueSummary.trim()
-        ? `Kategori: ${formData.issueCategory}\n\nEkstra detaljer:\n${formData.issueSummary}`
-        : `Kategori: ${formData.issueCategory}`;
+        ? `Kategori: ${categoriesText}\n\nEkstra detaljer:\n${formData.issueSummary}`
+        : `Kategori: ${categoriesText}`;
 
       Object.entries(formData).forEach(([key, value]) => {
+        if (key === "issueCategories") return;
         if (key === "issueSummary") {
           body.append("issueSummary", combinedIssueSummary);
           return;
@@ -673,32 +675,71 @@ export default function MachineIntakeFormPage() {
 
                 {currentStep === 2 && (
                   <div className="grid gap-4">
-                    <Field
-                      label="Issue category"
-                      required
-                      className="md:col-span-2"
-                    >
-                      <div>
-                        <TextInput
-                          name="issueCategory"
-                          placeholder="Search or write an issue category"
-                          value={formData.issueCategory}
-                          onChange={handleChange}
-                          list="issue-category-options"
-                          required
-                        />
-                        <datalist id="issue-category-options">
-                          {ISSUE_CATEGORY_OPTIONS.map((issue) => (
-                            <option key={issue} value={issue} />
+                    <Field label="Issue category" required>
+                      <div className="space-y-3">
+                        {formData.issueCategories.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            {formData.issueCategories.map((cat) => (
+                              <span
+                                key={cat}
+                                className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium"
+                                style={{
+                                  backgroundColor: "var(--color-accent)",
+                                  borderColor: "var(--color-accent)",
+                                  color: "var(--color-bg-main)",
+                                }}
+                              >
+                                {cat}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    markStarted();
+                                    setFormData((prev) => ({
+                                      ...prev,
+                                      issueCategories: prev.issueCategories.filter((c) => c !== cat),
+                                    }));
+                                    if (stepError) setStepError("");
+                                  }}
+                                  className="flex-shrink-0 rounded-full leading-none hover:opacity-70"
+                                  aria-label={`Remove ${cat}`}
+                                >
+                                  ✕
+                                </button>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap gap-2">
+                          {ISSUE_CATEGORY_OPTIONS.filter(
+                            (opt) => !formData.issueCategories.includes(opt),
+                          ).map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => {
+                                markStarted();
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  issueCategories: [...prev.issueCategories, opt],
+                                }));
+                                if (stepError) setStepError("");
+                              }}
+                              className="inline-flex items-center rounded-full border px-3 py-1.5 text-xs font-medium transition hover:opacity-80"
+                              style={{
+                                borderColor: "var(--color-border-soft)",
+                                backgroundColor: "var(--color-bg-card)",
+                                color: "var(--color-text-main)",
+                              }}
+                            >
+                              + {opt}
+                            </button>
                           ))}
-                        </datalist>
+                        </div>
                       </div>
                     </Field>
 
-                    <Field
-                      label="Extra details"
-                      className="md:col-span-2"
-                    >
+                    <Field label="Extra details">
                       <textarea
                         name="issueSummary"
                         placeholder="Add extra details if needed."
@@ -896,8 +937,8 @@ export default function MachineIntakeFormPage() {
 
                     <ReviewGroup title="Issue Details">
                       <ReviewItem
-                        label="Issue category"
-                        value={formData.issueCategory}
+                        label="Issue categories"
+                        value={formData.issueCategories.length > 0 ? formData.issueCategories.join(", ") : ""}
                       />
                       <ReviewItem
                         label="Extra details"

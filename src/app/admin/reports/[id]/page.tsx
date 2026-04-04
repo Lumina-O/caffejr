@@ -230,16 +230,23 @@ export default async function IntakeDetailPage({
                 </time>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-neutral-900">
-                    {entry.field === "engineerNotes"
-                      ? "Engineer notes"
-                      : entry.field.charAt(0).toUpperCase() + entry.field.slice(1)}{" "}
-                    updated
+                    {entry.action === "created"
+                      ? "Intake created"
+                      : entry.action === "deleted"
+                      ? "Intake deleted"
+                      : entry.field === "engineerNotes"
+                      ? "Engineer notes updated"
+                      : entry.field
+                      ? entry.field.charAt(0).toUpperCase() + entry.field.slice(1) + " updated"
+                      : "Updated"}
                   </p>
-                  <p className="mt-0.5 text-sm text-neutral-600">
-                    <span className="line-through text-neutral-400">{entry.oldValue ?? "—"}</span>
-                    {" → "}
-                    <span>{entry.newValue ?? "—"}</span>
-                  </p>
+                  {entry.action === "updated" && (
+                    <p className="mt-0.5 text-sm text-neutral-600">
+                      <span className="line-through text-neutral-400">{entry.oldValue ?? "—"}</span>
+                      {" → "}
+                      <span>{entry.newValue ?? "—"}</span>
+                    </p>
+                  )}
                 </div>
                 <span className="shrink-0 text-xs text-neutral-400">{entry.actorEmail}</span>
               </li>

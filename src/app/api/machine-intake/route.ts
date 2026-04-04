@@ -22,10 +22,8 @@ const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const ALLOWED_MACHINE_TYPES = [
   "espresso",
-  "bean-to-cup",
-  "capsule",
-  "filter",
-  "commercial",
+  "grinder",
+  "roaster",
 ] as const;
 
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -69,14 +67,10 @@ function formatMachineType(value: string) {
   switch (value) {
     case "espresso":
       return "Espresso machine";
-    case "bean-to-cup":
-      return "Bean to cup";
-    case "capsule":
-      return "Capsule";
-    case "filter":
-      return "Filter coffee";
-    case "commercial":
-      return "Commercial machine";
+    case "grinder":
+      return "Grinder";
+    case "roaster":
+      return "Coffee Roaster";
     default:
       return value || "Not provided";
   }
