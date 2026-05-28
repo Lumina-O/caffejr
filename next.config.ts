@@ -40,6 +40,19 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: securityHeaders,
       },
+      {
+        // PDF embed needs frame-ancestors 'self' so the <embed> on the intake detail page works.
+        // The broad rule above sets 'none'; this entry overrides just that directive for the PDF route.
+        source: "/api/admin/intakes/:id/pdf",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: securityHeaders
+              .find((h) => h.key === "Content-Security-Policy")!
+              .value.replace("frame-ancestors 'none'", "frame-ancestors 'self'"),
+          },
+        ],
+      },
     ];
   },
 };
