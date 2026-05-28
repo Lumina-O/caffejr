@@ -323,6 +323,7 @@ export async function POST(request: Request) {
     );
 
     const reportPdfBuffer = await generateMachineIntakePdf({
+      referenceId,
       customerName,
       email,
       phone,

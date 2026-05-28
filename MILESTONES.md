@@ -88,15 +88,15 @@ The intake form is functional end-to-end. These are the remaining polish items.
 
 ### Subtasks
 
-- [ ] Add page numbers to generated PDF
-- [ ] Add company logo/branding to PDF header and footer
-- [ ] Improve PDF layout: spacing, font sizes, section separators
+- [x] Add page numbers to generated PDF
+- [x] Add company logo/branding to PDF header and footer
+- [x] Improve PDF layout: spacing, font sizes, section separators
 - [x] Add unique submission reference number to PDF and confirmation page
 - [x] Photo upload with automatic compression (quality 0.82) before submission
-- [ ] Split 7-step form into separate step components (currently one 1,100-line file)
-- [ ] Add photo reorder drag-and-drop on upload step
-- [ ] Detect and warn on duplicate photo uploads
-- [ ] Add cancel/abort button for in-progress XHR file uploads
+- [x] Split 7-step form into separate step components (currently one 1,100-line file)
+- [x] Add photo reorder drag-and-drop on upload step
+- [x] Detect and warn on duplicate photo uploads
+- [x] Add cancel/abort button for in-progress XHR file uploads
 - [ ] Test PDF generation with edge case images (HEIC, large PNGs)
 
 ---

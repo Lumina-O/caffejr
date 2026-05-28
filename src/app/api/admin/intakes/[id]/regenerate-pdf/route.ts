@@ -50,6 +50,7 @@ export async function POST(
   );
 
   const pdfBuffer = await generateMachineIntakePdf({
+    referenceId: intake.referenceId,
     customerName: intake.customerName,
     email: intake.email,
     phone: intake.phone,

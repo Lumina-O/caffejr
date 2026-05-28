@@ -1,4 +1,6 @@
-import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFImage } from "pdf-lib";
+import fs from "fs";
+import path from "path";
+import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont, type PDFImage } from "pdf-lib";
 import sharp from "sharp";
 
 type EmbeddedPhoto = {
@@ -8,6 +10,7 @@ type EmbeddedPhoto = {
 };
 
 type MachineIntakePdfData = {
+  referenceId?: string;
   customerName: string;
   email: string;
   phone: string;
@@ -110,30 +113,52 @@ function addNewPage(pdfDoc: PDFDocument) {
   return pdfDoc.addPage([595.28, 841.89]); // A4
 }
 
-function drawPageHeader(page: PDFPage, title: string, subtitle?: string) {
+function drawPageHeader(
+  page: PDFPage,
+  title: string,
+  subtitle?: string,
+  fontBold?: PDFFont,
+  fontRegular?: PDFFont,
+  logoImage?: PDFImage,
+) {
   const { width, height } = page.getSize();
+
+  const logoSize = 36;
+  const logoX = width - 50 - logoSize;
+  const logoY = height - 50 - logoSize;
+
+  if (logoImage) {
+    page.drawImage(logoImage, {
+      x: logoX,
+      y: logoY,
+      width: logoSize,
+      height: logoSize,
+    });
+  }
 
   page.drawText(title, {
     x: 50,
-    y: height - 55,
-    size: 20,
+    y: height - 52,
+    size: 18,
+    font: fontBold,
     color: rgb(0.15, 0.23, 0.35),
   });
 
   if (subtitle) {
     page.drawText(subtitle, {
       x: 50,
-      y: height - 75,
-      size: 10,
-      color: rgb(0.4, 0.4, 0.4),
+      y: height - 72,
+      size: 9,
+      font: fontRegular,
+      color: rgb(0.5, 0.5, 0.5),
     });
   }
 
   page.drawLine({
-    start: { x: 50, y: height - 88 },
-    end: { x: width - 50, y: height - 88 },
-    thickness: 1,
-    color: rgb(0.85, 0.87, 0.9),
+    start: { x: 50, y: height - 84 },
+    end: { x: width - 50, y: height - 84 },
+    thickness: 0.75,
+    color: rgb(0.82, 0.85, 0.88),
   });
 }
 
@@ -161,18 +186,29 @@ export async function generateMachineIntakePdf(
   const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
+  let logoImage: PDFImage | undefined;
+  try {
+    const logoPath = path.join(process.cwd(), "public", "images", "logo.png");
+    const rawLogo = fs.readFileSync(logoPath);
+    // Convert to RGBA PNG to ensure pdf-lib can embed it (palette PNGs can fail)
+    const rgbaPng = await sharp(rawLogo).ensureAlpha().png().toBuffer();
+    logoImage = await pdfDoc.embedPng(rgbaPng);
+  } catch {
+    // Logo is optional — continue without it if missing or unreadable
+  }
+
   let page = addNewPage(pdfDoc);
   const { width, height } = page.getSize();
 
   const marginX = 50;
   const contentWidth = width - marginX * 2;
-  let y = height - 115;
+  let y = height - 112;
 
   const textColor = rgb(0.1, 0.1, 0.1);
-  const mutedColor = rgb(0.4, 0.4, 0.4);
+  const mutedColor = rgb(0.45, 0.45, 0.45);
   const accentColor = rgb(0.15, 0.23, 0.35);
 
-  drawPageHeader(page, "Machine Intake Report", "caffejr.dk");
+  drawPageHeader(page, "Machine Intake Report", `caffejr.dk  ·  Ref: ${data.referenceId ?? "—"}`, fontBold, fontRegular, logoImage);
 
   const drawText = (
     text: string,
@@ -196,32 +232,34 @@ export async function generateMachineIntakePdf(
   };
 
   const ensureSpace = (neededHeight: number) => {
-    if (y - neededHeight < 60) {
+    if (y - neededHeight < 70) {
       page = addNewPage(pdfDoc);
-      y = height - 115;
-      drawPageHeader(page, "Machine Intake Report");
+      y = height - 112;
+      drawPageHeader(page, "Machine Intake Report", `caffejr.dk  ·  Ref: ${data.referenceId ?? "—"}`, fontBold, fontRegular, logoImage);
     }
   };
 
   const drawSectionTitle = (title: string) => {
-    ensureSpace(30);
+    ensureSpace(36);
+
+    y -= 4;
 
     drawText(title, {
-      size: 13,
+      size: 12,
       bold: true,
       color: accentColor,
     });
 
-    y -= 8;
+    y -= 10;
 
     page.drawLine({
       start: { x: marginX, y },
       end: { x: width - marginX, y },
-      thickness: 1,
-      color: rgb(0.85, 0.87, 0.9),
+      thickness: 0.75,
+      color: rgb(0.82, 0.85, 0.88),
     });
 
-    y -= 18;
+    y -= 16;
   };
 
   const drawRow = (label: string, value: string) => {
@@ -334,7 +372,7 @@ export async function generateMachineIntakePdf(
       });
 
       page = addNewPage(pdfDoc);
-      drawPageHeader(pdfDoc.getPages()[pdfDoc.getPageCount() - 1], `Machine Photo ${i + 1}`, photo.name || `Uploaded image ${i + 1}`);
+      drawPageHeader(pdfDoc.getPages()[pdfDoc.getPageCount() - 1], `Machine Photo ${i + 1}`, photo.name || `Uploaded image ${i + 1}`, fontBold, fontRegular, logoImage);
 
       const currentPage = pdfDoc.getPages()[pdfDoc.getPageCount() - 1];
       const pageSize = currentPage.getSize();
@@ -377,6 +415,29 @@ export async function generateMachineIntakePdf(
         color: mutedColor,
       });
     }
+  }
+
+  // Add "Page X of Y" footer to every page
+  const totalPages = pdfDoc.getPageCount();
+  for (let i = 0; i < totalPages; i++) {
+    const p = pdfDoc.getPages()[i];
+    const { width: pw } = p.getSize();
+    const pageLabel = `Page ${i + 1} of ${totalPages}`;
+    const labelWidth = fontRegular.widthOfTextAtSize(pageLabel, 9);
+    p.drawText(pageLabel, {
+      x: pw - marginX - labelWidth,
+      y: 28,
+      size: 9,
+      font: fontRegular,
+      color: rgb(0.55, 0.55, 0.55),
+    });
+
+    p.drawLine({
+      start: { x: marginX, y: 42 },
+      end: { x: pw - marginX, y: 42 },
+      thickness: 0.5,
+      color: rgb(0.88, 0.89, 0.91),
+    });
   }
 
   const pdfBytes = await pdfDoc.save();

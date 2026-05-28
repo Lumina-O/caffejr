@@ -79,7 +79,7 @@ export async function PATCH(
         logEntries.push({
           intakeId: id,
           referenceId: current.referenceId,
-          actorEmail: actor.email,
+          actorEmail: actor.email ?? "",
           action: "updated",
           field,
           oldValue,

@@ -11,7 +11,7 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
 
   // Restrict browser features (camera, mic, etc.)
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
 
   // Force HTTPS for 1 year once visited (production only — set via hosting)
   { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },

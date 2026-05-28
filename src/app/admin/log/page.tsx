@@ -125,9 +125,8 @@ export default async function LogPage({
       actor: e.actorEmail,
     })),
     ...intakeLogs.map((e) => {
-      const action = (e.action === "created" || e.action === "deleted")
-        ? e.action
-        : "updated" as const;
+      const action: "created" | "updated" | "deleted" =
+        e.action === "created" || e.action === "deleted" ? e.action : "updated";
 
       let title = "";
       let detail = e.referenceId ? `Ref: ${e.referenceId}` : "";

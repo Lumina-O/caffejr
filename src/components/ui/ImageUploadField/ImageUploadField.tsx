@@ -13,6 +13,7 @@ type ImageUploadFieldProps = {
   label?: string;
   files: File[];
   onFilesChange: (files: File[]) => void;
+  onDuplicatesSkipped?: (names: string[]) => void;
   multiple?: boolean;
   required?: boolean;
   hint?: string;
@@ -31,6 +32,7 @@ export default function ImageUploadField({
   label = "Upload images",
   files,
   onFilesChange,
+  onDuplicatesSkipped,
   multiple = true,
   required = false,
   hint = "Upload images from your device, drag and drop them, or use your camera.",
@@ -44,12 +46,15 @@ export default function ImageUploadField({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const dragItemIndex = useRef<number | null>(null);
+  const dragOverItemIndex = useRef<number | null>(null);
 
   const [cameraOpen, setCameraOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingProgress, setProcessingProgress] = useState<number | null>(null);
+  const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
 
   const maxFileSizeBytes = maxFileSizeMb * 1024 * 1024;
   const maxSelectableFiles = multiple ? maxFiles : 1;
@@ -117,8 +122,16 @@ export default function ImageUploadField({
       return incomingFiles.length > 0 ? [incomingFiles[0]] : [];
     }
 
+    const existingNames = new Set(existingFiles.map((f) => f.name));
+    const duplicates = incomingFiles.filter((f) => existingNames.has(f.name));
+    const unique = incomingFiles.filter((f) => !existingNames.has(f.name));
+
+    if (duplicates.length > 0) {
+      onDuplicatesSkipped?.(duplicates.map((f) => f.name));
+    }
+
     const availableSlots = Math.max(0, maxFiles - existingFiles.length);
-    return [...existingFiles, ...incomingFiles.slice(0, availableSlots)];
+    return [...existingFiles, ...unique.slice(0, availableSlots)];
   }
 
   function isSupportedImageType(file: File) {
@@ -403,6 +416,46 @@ export default function ImageUploadField({
     resetInputValue();
   }
 
+  function handleCardDragStart(e: DragEvent<HTMLDivElement>, index: number) {
+    e.stopPropagation();
+    dragItemIndex.current = index;
+    setDraggingIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+  }
+
+  function handleCardDragEnter(e: DragEvent<HTMLDivElement>, index: number) {
+    e.preventDefault();
+    e.stopPropagation();
+    dragOverItemIndex.current = index;
+  }
+
+  function handleCardDragOver(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+  }
+
+  function handleCardDrop(e: DragEvent<HTMLDivElement>, index: number) {
+    e.preventDefault();
+    e.stopPropagation();
+    const from = dragItemIndex.current;
+    if (from === null || from === index) return;
+    const reordered = [...files];
+    const [moved] = reordered.splice(from, 1);
+    reordered.splice(index, 0, moved);
+    onFilesChange(reordered);
+    dragItemIndex.current = null;
+    dragOverItemIndex.current = null;
+    setDraggingIndex(null);
+  }
+
+  function handleCardDragEnd(e: DragEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    dragItemIndex.current = null;
+    dragOverItemIndex.current = null;
+    setDraggingIndex(null);
+  }
+
   function handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
     const nextFiles = Array.from(event.target.files || []);
     void processIncomingFiles(nextFiles);
@@ -527,7 +580,6 @@ export default function ImageUploadField({
           ref={inputRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
-          capture="environment"
           multiple={multiple}
           onChange={handleInputChange}
           className="hidden"
@@ -723,50 +775,61 @@ export default function ImageUploadField({
       </div>
 
       {previewUrls.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {previewUrls.map((url, index) => (
-            <div
-              key={`${url}-${index}`}
-              className="overflow-hidden rounded-2xl border"
-              style={{
-                borderColor: "var(--color-border-soft)",
-                backgroundColor: "var(--color-bg-card)",
-              }}
-            >
-              <img
-                src={url}
-                alt={`Preview ${index + 1}`}
-                className="h-36 w-full object-cover"
-              />
+        <div>
+          {previewUrls.length > 1 && (
+            <p className="mb-2 text-xs" style={{ color: "var(--color-text-muted)" }}>
+              Drag photos to reorder
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            {previewUrls.map((url, index) => (
+              <div
+                key={`${files[index]?.name}-${index}`}
+                draggable={!isProcessing && files.length > 1}
+                onDragStart={(e) => handleCardDragStart(e, index)}
+                onDragEnter={(e) => handleCardDragEnter(e, index)}
+                onDragOver={handleCardDragOver}
+                onDrop={(e) => handleCardDrop(e, index)}
+                onDragEnd={handleCardDragEnd}
+                className="overflow-hidden rounded-2xl border transition-opacity"
+                style={{
+                  borderColor: "var(--color-border-soft)",
+                  backgroundColor: "var(--color-bg-card)",
+                  opacity: draggingIndex === index ? 0.4 : 1,
+                  cursor: files.length > 1 && !isProcessing ? "grab" : "default",
+                }}
+              >
+                <img
+                  src={url}
+                  alt={`Preview ${index + 1}`}
+                  className="h-36 w-full object-cover"
+                  draggable={false}
+                />
 
-              <div className="space-y-2 px-3 py-2">
-                <p
-                  className="truncate text-xs"
-                  style={{ color: "var(--color-text-muted)" }}
-                >
-                  {files[index]?.name || `Image ${index + 1}`}
-                </p>
+                <div className="space-y-2 px-3 py-2">
+                  <p className="truncate text-xs" style={{ color: "var(--color-text-muted)" }}>
+                    {files[index]?.name || `Image ${index + 1}`}
+                  </p>
 
-                <button
-                  type="button"
-                  onClick={() => removeFileAtIndex(index)}
-                  disabled={isProcessing}
-                  className="inline-flex min-h-[36px] items-center justify-center rounded-full border px-3 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{
-                    borderColor: "var(--color-border-soft)",
-                    backgroundColor: "var(--color-bg-surface)",
-                    color: "var(--color-text-main)",
-                  }}
-                >
-                  Remove
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => removeFileAtIndex(index)}
+                    disabled={isProcessing}
+                    className="inline-flex min-h-[36px] items-center justify-center rounded-full border px-3 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{
+                      borderColor: "var(--color-border-soft)",
+                      backgroundColor: "var(--color-bg-surface)",
+                      color: "var(--color-text-main)",
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : null}
-
-      {/* TODO: Add duplicate-image detection, optional image reordering, and real backend upload progress wiring from the parent submit flow. */}
     </div>
   );
 }
