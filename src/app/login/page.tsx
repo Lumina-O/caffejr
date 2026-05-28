@@ -2,12 +2,14 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const redirectTo = searchParams.get("redirect") || "/admin";
+  const resetSuccess = searchParams.get("reset") === "success";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,6 +66,12 @@ export default function LoginPage() {
           </p>
         </div>
 
+        {resetSuccess ? (
+          <div className="mb-5 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+            Password updated successfully. Sign in with your new password.
+          </div>
+        ) : null}
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
@@ -86,13 +94,19 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <div className="mb-2">
+            <div className="mb-2 flex items-center justify-between">
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-neutral-800"
               >
                 Password
               </label>
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-neutral-500 hover:text-neutral-900 transition"
+              >
+                Forgot password?
+              </Link>
             </div>
 
             <div className="relative">
