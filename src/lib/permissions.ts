@@ -1,6 +1,6 @@
 import type { UserRole } from "@/types/auth";
 
-// TODO: Expand this into action-based permissions later, like "canEditBooking" or "canManageUsers".
+// TODO: Expand this into action-based permissions later, like "canManageUsers".
 const roleHierarchy: Record<UserRole, number> = {
   user: 0,
   staff: 1,

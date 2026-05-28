@@ -39,15 +39,13 @@ export default async function ReportsPage({
   const skip = (page - 1) * PER_PAGE;
 
   const [
-    totalBookings,
-    openSlots,
+    totalIntakeCount,
     completedJobs,
     pendingActions,
     intakes,
     totalIntakes,
   ] = await Promise.all([
-    db.booking.count(),
-    db.booking.count({ where: { status: { in: ["pending", "confirmed"] } } }),
+    db.machineIntake.count(),
     db.machineIntake.count({ where: { status: "completed" } }),
     db.machineIntake.count({ where: { status: { in: ["received", "in_progress"] } } }),
     db.machineIntake.findMany({
@@ -75,14 +73,9 @@ export default async function ReportsPage({
 
   const statCards = [
     {
-      title: "Total Bookings",
-      value: totalBookings,
-      description: "All registered bookings in the system.",
-    },
-    {
-      title: "Open Capacity Slots",
-      value: openSlots,
-      description: "Bookings pending or confirmed.",
+      title: "Total Intakes",
+      value: totalIntakeCount,
+      description: "All machine intake submissions.",
     },
     {
       title: "Completed Jobs",
@@ -118,7 +111,7 @@ export default async function ReportsPage({
       </div>
 
       {/* Stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {statCards.map((card) => (
           <div
             key={card.title}

@@ -33,7 +33,7 @@ export default function AdminSidebar({
 }: AdminSidebarProps) {
   const router = useRouter();
 
-  const canManageBookings = roleAtLeast(userRole, "staff");
+  const canViewCapacity = roleAtLeast(userRole, "admin");
   const canViewReports = roleAtLeast(userRole, "admin");
   const canViewLog = roleAtLeast(userRole, "admin");
   const canManageUsers = roleAtLeast(userRole, "super_admin");
@@ -81,7 +81,7 @@ export default function AdminSidebar({
           <NavItem href="/" icon={Home} label="Home" open={open} exact />
           <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" open={open} exact />
 
-          {canManageBookings && (
+          {canViewCapacity && (
             <NavItem href="/admin/capacity" icon={CalendarDays} label="Capacity" open={open} />
           )}
 
