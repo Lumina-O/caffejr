@@ -31,8 +31,11 @@ export async function POST(request: NextRequest) {
     });
 
     const senderEmail = process.env.BOOKING_SENDER_EMAIL ?? "noreply@caffejr.dk";
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    const resetLink = `${appUrl}/reset-password?token=${token}`;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (!appUrl && process.env.NODE_ENV === "production") {
+      throw new Error("NEXT_PUBLIC_APP_URL is not set");
+    }
+    const resetLink = `${appUrl ?? "http://localhost:3000"}/reset-password?token=${token}`;
 
     if (resend) {
       await resend.emails.send({
