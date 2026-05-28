@@ -12,7 +12,7 @@ export type SessionData = {
 
 export const sessionOptions: SessionOptions = {
   cookieName: "caffejr_session",
-  password: process.env.SESSION_SECRET as string,
+  password: process.env.SESSION_SECRET!,
   cookieOptions: {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
