@@ -26,7 +26,7 @@ const securityHeaders = [
       "img-src 'self' blob: data:",                      // blob/data needed for signature pad and photo previews
       "font-src 'self'",
       "connect-src 'self' blob:",   // blob: needed for Three.js ImageBitmapLoader (fetches blob URLs for embedded textures)
-      "frame-src 'self'",
+      "frame-src 'self' https://www.google.com", // Google Maps embed iframe in the Contact section
       "frame-ancestors 'none'",
     ].join("; "),
   },

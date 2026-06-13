@@ -13,6 +13,7 @@ export default function Contact({ language }: ContactProps) {
 
   const address = "Vigerslevvej 50A, 2500 Valby";
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(address)}&z=15&output=embed`;
+  const mapLink = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapFailed, setMapFailed] = useState(false);
@@ -158,15 +159,29 @@ export default function Contact({ language }: ContactProps) {
             }}
           >
             {!mapFailed ? (
-              <iframe
-                key={mapKey}
-                title="Google Map - Vigerslevvej 50A, 2500 Valby"
-                src={mapSrc}
-                className="h-full min-h-[320px] w-full md:min-h-[420px]"
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                onLoad={() => setMapLoaded(true)}
-              />
+              <>
+                <iframe
+                  key={mapKey}
+                  title="Google Map - Vigerslevvej 50A, 2500 Valby"
+                  src={mapSrc}
+                  className="h-full min-h-[320px] w-full md:min-h-[420px]"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  onLoad={() => setMapLoaded(true)}
+                />
+                <a
+                  href={mapLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="absolute bottom-4 right-4 rounded-lg px-4 py-2 text-sm font-semibold shadow-lg transition hover:opacity-90"
+                  style={{
+                    backgroundColor: "var(--color-accent)",
+                    color: "#1b120e",
+                  }}
+                >
+                  Åbn i Google Maps
+                </a>
+              </>
             ) : (
               <div className="flex h-full min-h-[320px] items-center justify-center px-6 text-center md:min-h-[420px]">
                 <div>
@@ -184,7 +199,7 @@ export default function Contact({ language }: ContactProps) {
                     Map cannot be rendered.
                   </p>
 
-                  <div className="mt-5">
+                  <div className="mt-5 flex flex-wrap justify-center gap-3">
                     <button
                       onClick={reloadMap}
                       className="rounded-lg px-4 py-2 text-sm font-semibold transition"
@@ -195,6 +210,18 @@ export default function Contact({ language }: ContactProps) {
                     >
                       Reload map
                     </button>
+                    <a
+                      href={mapLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-lg border px-4 py-2 text-sm font-semibold transition hover:opacity-90"
+                      style={{
+                        borderColor: "var(--color-accent)",
+                        color: "var(--color-accent)",
+                      }}
+                    >
+                      Åbn i Google Maps
+                    </a>
                   </div>
                 </div>
               </div>
@@ -206,6 +233,5 @@ export default function Contact({ language }: ContactProps) {
   );
 }
 
-// TODO: Replace the right-side placeholder with a styled branded map wrapper if needed.
-// TODO: Add tel: and mailto: links when the final interaction flow is ready.
-// TODO: Connect the CTA buttons to the final booking or contact action.
+// Map embeds Google Maps for the real address with an "Open in Google Maps"
+// link (overlay + failure fallback). tel:/mailto: CTAs are wired to siteData.

@@ -1,11 +1,50 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getSiteData, type Language } from "@/data/siteData";
 
 type TestimonialsProps = {
   language: Language;
 };
 
+type ReviewCard = {
+  rating: string;
+  text: string;
+  name: string;
+  time?: string;
+};
+
 export default function Testimonials({ language }: TestimonialsProps) {
   const { testimonials } = getSiteData(language);
+
+  // Real Google reviews keyed by the language they were fetched for. Until they
+  // arrive (or if the API is unconfigured / fails), the static placeholder
+  // cards from siteData are shown instead.
+  const [fetched, setFetched] = useState<{
+    lang: Language;
+    reviews: ReviewCard[];
+  } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`/api/reviews?lang=${language}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.reviews?.length) return;
+        setFetched({ lang: language, reviews: data.reviews as ReviewCard[] });
+      })
+      .catch(() => {
+        // Keep placeholder cards on failure.
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [language]);
+
+  const cards: ReviewCard[] =
+    fetched && fetched.lang === language ? fetched.reviews : testimonials.cards;
 
   return (
     <section
@@ -40,7 +79,7 @@ export default function Testimonials({ language }: TestimonialsProps) {
         <div className="mt-12 md:mt-14">
           <div className="w-full overflow-hidden">
             <div className="flex justify-start gap-4 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-hide">
-              {testimonials.cards.map((card, index) => (
+              {cards.map((card, index) => (
                 <article
                   key={`${card.name}-${index}`}
                   className="flex min-h-[200px] w-[260px] flex-shrink-0 snap-start flex-col rounded-[18px] border px-5 py-5 md:min-h-[220px] md:w-[300px] md:px-6 md:py-6"
@@ -81,6 +120,14 @@ export default function Testimonials({ language }: TestimonialsProps) {
                     style={{ color: "var(--color-text-muted)" }}
                   >
                     {card.name}
+                    {card.time ? (
+                      <span
+                        className="ml-2 font-normal normal-case tracking-normal"
+                        style={{ color: "var(--color-text-muted)" }}
+                      >
+                        · {card.time}
+                      </span>
+                    ) : null}
                   </p>
                 </article>
               ))}
@@ -91,7 +138,3 @@ export default function Testimonials({ language }: TestimonialsProps) {
     </section>
   );
 }
-
-// TODO: Replace placeholder reviews with real customer testimonials and names.
-// TODO: Add decorative quote marks or coffee-themed accents if the customer wants more personality.
-// TODO: Link CTA button to the final booking/contact flow once ready.

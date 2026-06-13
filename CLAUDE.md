@@ -147,7 +147,13 @@ CAFFEJR_BLOB_READ_WRITE_TOKEN # Vercel Blob private store token
 
 # Auth
 SESSION_SECRET                # iron-session encryption secret (min 32 chars)
+
+# Google Reviews (Testimonials section)
+GOOGLE_PLACES_API_KEY         # Places API (New) key with billing enabled
+GOOGLE_PLACE_ID               # Place ID for the Caffe Jr. business listing
 ```
+
+If `GOOGLE_PLACES_API_KEY` / `GOOGLE_PLACE_ID` are unset (or the API call fails), the Testimonials section falls back to the static placeholder cards in `siteData.ts`.
 
 ### Path Alias
 
@@ -164,6 +170,11 @@ SESSION_SECRET                # iron-session encryption secret (min 32 chars)
 ---
 
 ## Changelog
+
+### 2026-06-13 — Real testimonials + map link (full-launch content)
+
+- **Google reviews**: Testimonials section now fetches real reviews from the Google Places API (New) via `GET /api/reviews?lang=da|en` (`src/lib/googleReviews.ts`); up to 5 reviews, hour-cached, localized text. Falls back to static `siteData.ts` cards when `GOOGLE_PLACES_API_KEY`/`GOOGLE_PLACE_ID` are unset or the call fails. `Testimonials.tsx` is now a client component that swaps placeholders for real reviews after fetch.
+- **Contact map**: added "Åbn i Google Maps" link (overlay on the embed + in the failure fallback) opening the real address in a new tab. Added `https://www.google.com` to CSP `frame-src` so the Maps embed iframe isn't blocked ("This content is blocked").
 
 ### 2026-03-18 — Booking removal, capacity modal, sidebar icons, dashboard fixes
 
