@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { LanguageProvider } from "@/context/LanguageContext";
+import { siteUrl } from "@/lib/siteUrl";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Caffe Junior — Service & Reparation af Kaffemaskiner",
     template: "%s | Caffe Junior",
